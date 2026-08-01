@@ -109,6 +109,10 @@ describe("emitted css", () => {
     expect(overDimmed).toEqual(atFloor);
   });
 
+  it("declares the frame colour, which carries no text", () => {
+    expect(css).toContain("--room-frame:");
+  });
+
   it("uses no blue dominant colour on the room screen", () => {
     // The ageing lens yellows, which desaturates blues and destroys blue-green
     // discrimination first, so no room colour may have blue as its strongest

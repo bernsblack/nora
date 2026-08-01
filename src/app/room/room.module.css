@@ -3,26 +3,29 @@
  * design/room-theme.ts emits, so there is exactly one place where a font size
  * or a contrast pairing is decided, and a test can check it.
  *
- * Nothing here scrolls, nothing here navigates, and nothing here animates
- * except a slow crossfade. Movement in a room reads as a person in the room.
+ * The screen is meant to read as a printed thing on a wall rather than as an
+ * application. Nothing scrolls, nothing navigates, and nothing animates except
+ * a slow crossfade, because movement in a room reads as a person in the room.
  */
 
-/*
- * The day line gets the full width on its own row. Afrikaans compounds the day
- * and the part of the day into one unbreakable word, "Saterdagmiddag", which is
- * wider than a column and cannot be wrapped. It is also the most important line
- * on the screen, so it is the one that should have the room.
- */
 .room {
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  grid-template-rows: auto 1fr;
-  align-items: center;
+  /*
+   * The text and the face sit side by side and the whole block is centred as a
+   * unit. Rows are sized to their content rather than stretched, so the screen
+   * does not open a hole in the middle of itself when a line is short.
+   */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-areas:
+    "day   day"
+    "lines photo";
   align-content: center;
-  gap: clamp(24px, 4vw, 72px);
-  padding: clamp(32px, 5vw, 96px);
+  justify-content: stretch;
+  column-gap: clamp(32px, 5vw, 88px);
+  row-gap: clamp(20px, 3vw, 44px);
+  padding: clamp(32px, 5vw, 88px);
   overflow: hidden;
 
   background: var(--room-surface);
@@ -30,7 +33,7 @@
   font-family: var(--room-font);
   font-weight: var(--room-weight);
   letter-spacing: var(--room-tracking);
-  line-height: 1.15;
+  line-height: 1.12;
 
   /* A kiosk gets touched by accident. Nothing here is selectable or draggable. */
   user-select: none;
@@ -39,36 +42,93 @@
   cursor: none;
 }
 
-/* One column on a portrait tablet or a phone sized preview. */
-@media (max-aspect-ratio: 1/1) {
-  .room {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-
-  .photoFrame {
-    grid-column: 1;
-    grid-row: 3;
-  }
+/* With no face to show, the words take the whole width rather than half of it. */
+.room[data-photo="false"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "day"
+    "lines";
 }
 
-.column {
-  grid-column: 1;
-  grid-row: 2;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(16px, 2.5vw, 40px);
-  min-width: 0;
+/*
+ * Nothing to say beside the face. This is the dial turned all the way down: the
+ * day and a face, centred, and nothing else on the screen at all.
+ */
+.room[data-lines="false"][data-photo="true"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "day"
+    "photo";
+  justify-items: center;
+  text-align: center;
+}
+
+.room[data-lines="false"] .photoFrame {
+  width: auto;
+  align-self: center;
+}
+
+.room[data-lines="false"] .photo {
+  width: auto;
+  height: 46vh;
+}
+
+/* Portrait tablet, or a phone sized preview. The face goes underneath. */
+@media (max-aspect-ratio: 4/3) {
+  .room {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "day"
+      "lines"
+      "photo";
+  }
 }
 
 .day {
-  grid-column: 1 / -1;
-  grid-row: 1;
+  grid-area: day;
   font-size: var(--room-fs-day-and-part-of-day);
   margin: 0;
   text-wrap: balance;
-  /* Last resort. A wrapped word is bad, a word running off the screen is worse. */
+  /*
+   * Afrikaans compounds the day and the part of the day into one unbreakable
+   * word, "Saterdagmiddag", which is why the day gets a row of its own. This is
+   * the last resort under it: a wrapped word is bad, a word running off the
+   * screen is worse.
+   */
   overflow-wrap: anywhere;
+}
+
+.lines {
+  grid-area: lines;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2vw, 32px);
+  min-width: 0;
+}
+
+/*
+ * The one next thing. Second in the hierarchy after the day, and above the
+ * location, because where they are does not change and what happens next does.
+ */
+.next {
+  font-size: var(--room-fs-next-thing);
+  margin: 0;
+  text-wrap: balance;
+  /* The crossfade is the only movement on this screen. */
+  animation: fade var(--room-crossfade) ease-in-out;
+}
+
+/*
+ * An answer Nora has just given, in the same slot. Marked with a rule so it
+ * reads as something being said rather than as something on the schedule. The
+ * rule is never the only difference: the words themselves are the answer.
+ */
+.spoken {
+  composes: next;
+  border-left: 6px solid var(--room-accent);
+  padding-left: clamp(16px, 1.6vw, 28px);
+  margin-left: calc(-1 * clamp(22px, 2vw, 34px));
 }
 
 .location {
@@ -78,31 +138,44 @@
   text-wrap: balance;
 }
 
-.next {
-  font-size: var(--room-fs-next-thing);
-  margin: 0;
-  text-wrap: balance;
-  /* The crossfade is the only movement on this screen. */
-  animation: fade var(--room-crossfade) ease-in-out;
-}
-
 .photoFrame {
-  grid-column: 2;
-  grid-row: 2;
+  grid-area: photo;
+  /* Top aligned with the words beside it, so the two read as one block. */
+  align-self: start;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 1.5vw, 28px);
+  gap: clamp(14px, 1.6vw, 26px);
   align-items: center;
   min-width: 0;
 }
 
+/*
+ * A mat around the picture, the way a photograph in a room is framed. It also
+ * gives a light photograph an edge against a light wall.
+ */
 .photo {
   width: 100%;
-  max-height: 45vh;
+  aspect-ratio: 4 / 5;
+  max-height: 52vh;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 6px;
+  background: var(--room-frame);
+  padding: clamp(10px, 1.1vw, 18px);
+  /*
+   * The face is the brightest thing on the screen and therefore the main light
+   * source in the room at night. It dims with the ink. Nothing is read off it,
+   * so this affects no contrast floor.
+   */
+  filter: brightness(var(--room-photo-dim));
   animation: fade var(--room-crossfade) ease-in-out;
+}
+
+@media (max-aspect-ratio: 4/3) {
+  .photo {
+    aspect-ratio: 3 / 2;
+    max-height: 34vh;
+  }
 }
 
 .caption {
@@ -111,22 +184,41 @@
   text-wrap: balance;
 }
 
+/*
+ * The microphone state, in words, readable from across the room, and in the
+ * corner furthest from anything else so it never competes with an answer.
+ */
 .mic {
   position: absolute;
   bottom: clamp(16px, 2vw, 40px);
-  right: clamp(16px, 2vw, 40px);
+  left: clamp(16px, 2vw, 40px);
   margin: 0;
   font-size: var(--room-fs-mic-state);
   color: var(--room-ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.micDot {
+  width: 0.32em;
+  height: 0.32em;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 /*
- * A recogniser that sends audio off the device gets a visibly different
- * indicator. Nobody should be able to walk past this screen and not know.
+ * A recogniser that sends audio off the device gets a visibly different marker.
+ * Nobody should be able to walk past this screen and not know.
  */
-.mic[data-transmitting="true"]::after {
-  content: " \2022";
-  color: var(--room-accent);
+.mic[data-transmitting="true"] .micDot {
+  background: var(--room-accent);
+  box-shadow: 0 0 0 0.22em var(--room-frame);
+}
+
+.mic[data-listening="false"] .micDot {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px currentColor;
 }
 
 @keyframes fade {
@@ -151,7 +243,8 @@
  */
 .fallback {
   grid-template-columns: 1fr;
-  background: var(--room-surface, #fbf3e7);
+  grid-template-areas: "day";
+  background: #fbf3e7;
 }
 
 .fallbackMark {
@@ -165,16 +258,21 @@
   right: 12px;
 }
 
-/* The Wizard of Oz control. Never rendered without the query parameter. */
+/*
+ * The Wizard of Oz control. Never rendered without the query parameter, and
+ * kept at the top so it does not sit over the microphone indicator, which is
+ * one of the things being tested.
+ */
 .wizard {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   display: flex;
   gap: 8px;
   padding: 8px;
   background: rgba(0, 0, 0, 0.55);
+  cursor: auto;
 }
 
 .wizardInput {

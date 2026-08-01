@@ -1,10 +1,11 @@
 /*
  * The family app. A normal application for a normal adult, on a phone, usually
- * standing up. None of the room screen's constraints apply here, and applying
- * them would produce something that looks like it is for a patient.
+ * standing up in a corridor between other things. None of the room screen's
+ * constraints apply here, and applying them would produce something that looks
+ * like it is for a patient.
  *
- * It does share the room screen's warmth, because this is where the brand
- * lives and the two surfaces are one product.
+ * It shares the room screen's warmth, because this is where the brand lives and
+ * the two surfaces are one product.
  */
 
 .shell {
@@ -12,55 +13,82 @@
   --ink-soft: #5a4632;
   --surface: #fdf9f3;
   --card: #ffffff;
-  --line: #e5d9c8;
+  --line: #e8dccb;
+  --line-strong: #d8c6ac;
   --accent: #7a2e0c;
+  --accent-soft: #fbf0e6;
   --warn: #8a4b00;
+  --good: #3f5c2f;
 
-  min-height: 100%;
+  min-height: 100dvh;
   background: var(--surface);
   color: var(--ink);
   line-height: 1.5;
+  padding-bottom: 64px;
 }
 
+/* Stays put while the page is long, so it is always clear whose settings these are. */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 20px clamp(16px, 4vw, 40px);
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 40px);
   border-bottom: 1px solid var(--line);
   background: var(--card);
 }
 
+.headerMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .brand {
-  font-size: 20px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.headerPerson {
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .who {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 13px;
+  text-align: right;
 }
 
 .main {
-  max-width: 900px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: clamp(16px, 4vw, 32px);
+  padding: clamp(16px, 4vw, 28px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .section {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: clamp(16px, 3vw, 22px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .sectionTitle {
@@ -75,10 +103,77 @@
   margin: 0;
 }
 
+/* Live preview of what is on the tablet right now. */
+
+.preview {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.previewFrame {
+  width: 320px;
+  height: 200px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  flex: none;
+  background: var(--surface);
+}
+
+/*
+ * The real room screen, scaled down. A description of what is showing would go
+ * out of date with the code, and the point of this is that a family member can
+ * see what their mother is looking at.
+ */
+.previewInner {
+  width: 1280px;
+  height: 800px;
+  border: 0;
+  transform: scale(0.25);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.previewSide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  flex: 1;
+}
+
+.links {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.links a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Forms */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
+}
+
+.gridWide {
+  composes: grid;
+  grid-template-columns: 1fr;
 }
 
 .field {
@@ -97,17 +192,24 @@
 .select,
 .textarea {
   font: inherit;
-  font-size: 15px;
-  padding: 9px 11px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  font-size: 16px; /* Anything smaller makes iOS zoom the page on focus. */
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
   background: #fff;
   color: inherit;
   width: 100%;
 }
 
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .textarea {
-  min-height: 72px;
+  min-height: 76px;
   resize: vertical;
 }
 
@@ -116,11 +218,18 @@
   align-items: center;
   gap: 10px;
   font-size: 15px;
+  padding: 10px 0;
+}
+
+.checkRow input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -129,19 +238,78 @@
   font: inherit;
   font-size: 15px;
   font-weight: 600;
-  padding: 9px 16px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 9px;
   border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
   cursor: pointer;
+  min-height: 44px; /* Thumb sized, because this is used standing up. */
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .buttonQuiet {
   composes: button;
   background: transparent;
   color: var(--accent);
+  font-weight: 500;
 }
+
+.success {
+  font-size: 14px;
+  color: var(--good);
+}
+
+.failure {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+.problems {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--warn);
+  background: #fdf4e8;
+  border: 1px solid #e6c9a0;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* A day of the schedule, with its own heading. */
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dayTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink-soft);
+  flex: none;
+  min-width: 3.4em;
+}
+
+/* Lists */
 
 .list {
   list-style: none;
@@ -155,9 +323,9 @@
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   flex-wrap: wrap;
 }
 
@@ -166,6 +334,7 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .rowMeta {
@@ -173,43 +342,94 @@
   font-size: 13px;
 }
 
+.quote {
+  font-size: 14px;
+  border-left: 3px solid var(--line-strong);
+  padding-left: 10px;
+  margin-top: 4px;
+}
+
 .tag {
   font-size: 12px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   color: var(--ink-soft);
   white-space: nowrap;
 }
 
+.empty {
+  font-size: 14px;
+  color: var(--ink-soft);
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  padding: 14px;
+}
+
 /*
- * The answer policy section is visually separated because it is not like the
- * other settings. It decides what somebody believes about whether their
- * husband is alive.
+ * Adding something is folded away by default, so the page reads as what is set
+ * now rather than as a wall of blank fields.
+ */
+.disclosure {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+}
+
+.disclosure[open] {
+  padding-bottom: 14px;
+  background: var(--surface);
+}
+
+.disclosureSummary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  list-style: none;
+}
+
+.disclosureSummary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosureSummary::before {
+  content: "+ ";
+  font-weight: 700;
+}
+
+.disclosure[open] .disclosureSummary::before {
+  content: "- ";
+}
+
+/*
+ * The answer policy is visually separated because it is not like the other
+ * settings. It decides what somebody believes about whether their husband is
+ * alive.
  */
 .policy {
-  border-color: var(--accent);
+  border-color: var(--line-strong);
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.policy .disclosure,
+.policy .row {
+  background: var(--card);
 }
 
 .policyWarning {
   font-size: 14px;
-  color: var(--warn);
-  border-left: 3px solid var(--warn);
-  padding-left: 12px;
+  margin: 0;
 }
 
 .thumb {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 8px;
   object-fit: cover;
   flex: none;
-}
-
-.footerLinks {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 14px;
+  background: var(--surface);
 }

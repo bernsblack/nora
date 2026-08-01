@@ -27,6 +27,12 @@ export interface RoomPalette {
   inkSoft: string;
   /** Used for emphasis and for the mic indicator. Never the only signal. */
   accent: string;
+  /**
+   * The mat around the photograph. Carries no text and no meaning, so it is
+   * exempt from the contrast floors. It exists so the face reads as a framed
+   * picture in a room rather than as an image in an app.
+   */
+  frame: string;
 }
 
 export const DAY_PALETTE: RoomPalette = {
@@ -34,6 +40,7 @@ export const DAY_PALETTE: RoomPalette = {
   ink: "#241C13",
   inkSoft: "#4A3A28",
   accent: "#7A2E0C",
+  frame: "#F1E3CE",
 };
 
 export const NIGHT_PALETTE: RoomPalette = {
@@ -41,6 +48,7 @@ export const NIGHT_PALETTE: RoomPalette = {
   ink: "#F2E0C4",
   inkSoft: "#E0C79B",
   accent: "#E0C79B",
+  frame: "#241D14",
 };
 
 /**
@@ -58,7 +66,7 @@ export interface TypeStep {
 export const ROOM_TYPE_SCALE = {
   dayAndPartOfDay: { min: 72, vw: 7.5, max: 152 },
   nextThing: { min: 56, vw: 5, max: 104 },
-  location: { min: 44, vw: 3.4, max: 76 },
+  location: { min: 44, vw: 3, max: 68 },
   photoCaption: { min: 40, vw: 3, max: 64 },
   micState: { min: ROOM_MIN_TEXT_PX, vw: 2.4, max: 48 },
 } satisfies Record<string, TypeStep>;
@@ -118,6 +126,8 @@ export function roomThemeCss(palette: RoomPalette, inkDim: number): string {
     --room-ink: ${ink};
     --room-ink-soft: ${inkSoft};
     --room-accent: ${accent};
+    --room-frame: ${palette.frame};
+    --room-photo-dim: ${dim};
     --room-weight: ${ROOM_MIN_FONT_WEIGHT};
     --room-tracking: ${ROOM_MIN_LETTER_SPACING_EM}em;
     --room-crossfade: ${ROOM_CROSSFADE_MS}ms;

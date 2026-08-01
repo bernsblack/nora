@@ -120,9 +120,24 @@ function zonedOffsetMs(at: Date, timezone: string): number {
 }
 
 /**
+ * Build the instant at a wall clock time in a timezone. Two passes, because the
+ * offset itself depends on the instant across a daylight saving boundary.
+ */
+export function zonedDateFromParts(
+  parts: { year: number; month: number; day: number; hour: number; minute: number },
+  timezone: string,
+): Date {
+  const target = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute);
+  let guess = new Date(target);
+  for (let pass = 0; pass < 2; pass += 1) {
+    guess = new Date(target - zonedOffsetMs(guess, timezone));
+  }
+  return guess;
+}
+
+/**
  * Build the instant at a given wall clock time in a timezone, on the calendar
- * day of `reference` shifted by `dayOffset`. Two passes, because the offset
- * itself depends on the instant across a daylight saving boundary.
+ * day of `reference` shifted by `dayOffset`.
  */
 export function zonedDateAt(
   reference: Date,
@@ -132,12 +147,33 @@ export function zonedDateAt(
   dayOffset = 0,
 ): Date {
   const parts = zonedParts(reference, timezone);
-  const target = Date.UTC(parts.year, parts.month - 1, parts.day + dayOffset, hour, minute);
-  let guess = new Date(target);
-  for (let pass = 0; pass < 2; pass += 1) {
-    guess = new Date(target - zonedOffsetMs(guess, timezone));
-  }
-  return guess;
+  return zonedDateFromParts(
+    { ...parts, day: parts.day + dayOffset, hour, minute },
+    timezone,
+  );
+}
+
+/**
+ * Read a datetime-local input value as a wall clock time at the facility.
+ *
+ * The browser hands back "2026-08-04T15:00" with no timezone at all, and a
+ * family member three timezones away from the care home means it literally: an
+ * event at three o'clock is at three o'clock where the person lives. Parsing it
+ * with new Date() would read it in the server's zone instead, which is neither.
+ */
+export function parseLocalDateTime(value: string, timezone: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value.trim());
+  if (!match) return null;
+  return zonedDateFromParts(
+    {
+      year: Number(match[1]),
+      month: Number(match[2]),
+      day: Number(match[3]),
+      hour: Number(match[4]),
+      minute: Number(match[5]),
+    },
+    timezone,
+  );
 }
 
 /** True when two instants fall on the same calendar day in the given zone. */

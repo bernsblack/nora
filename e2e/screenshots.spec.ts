@@ -30,18 +30,26 @@ test("room screen, English, day", async ({ page, request }) => {
   await request.post("/api/test-reset");
   await page.goto("/app/person-marta");
   await page.getByLabel("Language on the screen").selectOption("en");
-  await page.getByRole("button", { name: "Save" }).first().click();
+  await page.getByRole("button", { name: "Save these details", exact: true }).click();
+  await expect(page.getByText(/Saved/)).toBeVisible();
 
   await page.goto("/room?token=dev-room-token");
   await expect(page.getByTestId("day")).toBeVisible();
   await page.screenshot({ animations: "disabled", path: `${OUT}/room-en-day.png` });
 });
 
+test("room screen, at night", async ({ page }) => {
+  await page.goto("/room?token=dev-room-token&lux=2");
+  await expect(page.getByTestId("day")).toBeVisible();
+  await page.screenshot({ animations: "disabled", path: `${OUT}/room-night.png` });
+});
+
 test("room screen, dial turned down to the day and a face", async ({ page, request }) => {
   await request.post("/api/test-reset");
   await page.goto("/app/person-marta");
   await page.getByLabel("How much the device does").selectOption("minimal");
-  await page.getByRole("button", { name: "Save" }).first().click();
+  await page.getByRole("button", { name: "Save these details", exact: true }).click();
+  await expect(page.getByText(/Saved/)).toBeVisible();
 
   await page.goto("/room?token=dev-room-token");
   await expect(page.getByTestId("day")).toBeVisible();
@@ -58,6 +66,13 @@ test("room screen, answering a question about the husband who died", async ({ pa
 
 test("family app", async ({ page }) => {
   await page.goto("/app");
-  await expect(page.getByRole("heading", { name: "Marta", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.screenshot({ animations: "disabled", path: `${OUT}/family-app.png`, fullPage: true });
+});
+
+test("family app on a phone, which is where it is used", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.screenshot({ animations: "disabled", path: `${OUT}/family-app-phone.png`, fullPage: true });
 });

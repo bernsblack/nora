@@ -13,11 +13,15 @@
   padding: 0;
 }
 
+/*
+ * min-height rather than height, and no overflow-x on the body. A body with a
+ * fixed height and a hidden overflow becomes its own scroll container, which
+ * clips everything past the first screenful and breaks sticky positioning. The
+ * room screen does its own clipping, where clipping is the intent.
+ */
 html,
 body {
-  height: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
+  min-height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

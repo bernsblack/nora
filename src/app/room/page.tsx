@@ -16,11 +16,12 @@ import styles from "./room.module.css";
 export const dynamic = "force-dynamic";
 
 interface RoomPageProps {
-  searchParams: Promise<{ token?: string; wizard?: string }>;
+  searchParams: Promise<{ token?: string; wizard?: string; lux?: string }>;
 }
 
 export default async function RoomPage({ searchParams }: RoomPageProps) {
-  const { token = FIXTURE_DEVICE_TOKEN, wizard } = await searchParams;
+  const { token = FIXTURE_DEVICE_TOKEN, wizard, lux } = await searchParams;
+  const pretendLux = lux === undefined ? undefined : Number(lux);
   const repository = getRepository();
   const now = new Date();
 
@@ -40,6 +41,7 @@ export default async function RoomPage({ searchParams }: RoomPageProps) {
       policy={policy}
       serverNow={now.toISOString()}
       wizard={wizard === "1"}
+      pretendLux={pretendLux !== undefined && Number.isFinite(pretendLux) ? pretendLux : undefined}
     />
   );
 }

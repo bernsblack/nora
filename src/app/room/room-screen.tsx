@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ROOM_TICK_MS } from "@/config/constants";
+import { MAX_INK_DIM, ROOM_TICK_MS } from "@/config/constants";
 import { resolveLighting } from "@/domain/lighting";
 import { buildRoomView } from "@/domain/room-view";
 import { deserializeRoomData, type SerializedRoomData } from "@/domain/serialize";
@@ -9,13 +9,17 @@ import { zonedParts } from "@/domain/time";
 import type { AnswerPolicy } from "@/domain/types";
 import { phrases } from "@/i18n/strings";
 import { roomThemeCss } from "@/design/room-theme";
-import { UnmeasuredAmbientLight, type AmbientLightSource } from "@/services/ambient-light";
+import {
+  MockAmbientLight,
+  UnmeasuredAmbientLight,
+  type AmbientLightSource,
+} from "@/services/ambient-light";
 import styles from "./room.module.css";
 import { useVoice } from "./use-voice";
 
 /**
- * The room screen. Four things and nothing else: the day, where they are, the
- * one next thing, and a face with a name under it.
+ * The room screen. Four things and nothing else: the day, the one next thing,
+ * where they are, and a face with a name under it.
  *
  * The whole day is handed over once and every tick derives from it locally, so
  * the screen keeps working when the network does not.
@@ -31,12 +35,26 @@ interface RoomScreenProps {
    * writing any intent matching, so the operator needs a way to be the ears.
    */
   wizard?: boolean;
-  /** Tests inject a fixed clock and a fixed lux reading through these. */
+  /**
+   * Pretend the room is this bright, in lux. For previewing the night palette
+   * from the family app and for screenshots, since almost no tablet has a
+   * sensor to produce a real reading.
+   */
+  pretendLux?: number;
+  /** Tests inject a fixed clock and a fixed light source through these. */
   clock?: () => Date;
   light?: AmbientLightSource;
 }
 
-export function RoomScreen({ data, policy, serverNow, wizard, clock, light }: RoomScreenProps) {
+export function RoomScreen({
+  data,
+  policy,
+  serverNow,
+  wizard,
+  pretendLux,
+  clock,
+  light,
+}: RoomScreenProps) {
   const roomData = useMemo(() => deserializeRoomData(data), [data]);
   const now = useCallback(() => (clock ? clock() : new Date()), [clock]);
 
@@ -50,7 +68,12 @@ export function RoomScreen({ data, policy, serverNow, wizard, clock, light }: Ro
     return () => clearInterval(timer);
   }, [now]);
 
-  const ambient = useMemo(() => light ?? new UnmeasuredAmbientLight(), [light]);
+  const ambient = useMemo(() => {
+    if (light) return light;
+    return pretendLux === undefined
+      ? new UnmeasuredAmbientLight()
+      : new MockAmbientLight(pretendLux);
+  }, [light, pretendLux]);
   useEffect(() => ambient.start(), [ambient]);
 
   const view = useMemo(() => buildRoomView(roomData, tick), [roomData, tick]);
@@ -68,9 +91,21 @@ export function RoomScreen({ data, policy, serverNow, wizard, clock, light }: Ro
     now,
   });
 
-  // What the voice layer just answered takes the next thing slot, because two
-  // answers on one screen is one too many.
-  const spoken = voice.state.kind === "answering" ? voice.state.text : null;
+  const answer = voice.state.kind === "answering" ? voice.state : null;
+
+  /**
+   * At the quietest dial setting there is no next thing and no location, so
+   * there are no lines to sit beside the face. The screen becomes a centred
+   * page: the day, and a face. See room.module.css.
+   */
+  const hasLines = Boolean(answer || view.nextThing || view.location);
+
+  /**
+   * Light before sound. The screen comes up to full brightness the moment there
+   * is something to say, and use-voice waits LIGHT_BEFORE_SOUND_MS before the
+   * voice starts, so the words have somewhere visible to come from.
+   */
+  const inkDim = answer ? MAX_INK_DIM : lighting.inkDim;
 
   return (
     <div
@@ -79,34 +114,44 @@ export function RoomScreen({ data, policy, serverNow, wizard, clock, light }: Ro
       data-room=""
       data-lighting={lighting.mode}
       data-language={view.language}
+      data-photo={view.photo ? "true" : "false"}
+      data-lines={hasLines ? "true" : "false"}
       data-testid="room"
     >
-      <style dangerouslySetInnerHTML={{ __html: roomThemeCss(lighting.palette, lighting.inkDim) }} />
+      <style dangerouslySetInnerHTML={{ __html: roomThemeCss(lighting.palette, inkDim) }} />
 
       <p className={styles.day} data-testid="day">
         {view.dayAndPartOfDay}
       </p>
 
-      <div className={styles.column}>
+      <div className={styles.lines}>
+        {/*
+          One region for the answer slot, so a screen reader announces a spoken
+          answer once rather than announcing the schedule again with it.
+        */}
+        <div aria-live="polite">
+          {answer ? (
+            /* An answer takes the next thing's place. Two answers on one screen
+               is one too many. */
+            <p className={styles.spoken} data-testid="spoken" data-rule={answer.rule}>
+              {answer.text}
+            </p>
+          ) : view.nextThing ? (
+            <p className={styles.next} data-testid="next-thing">
+              {view.nextThing}
+            </p>
+          ) : null}
+
+          {voice.state.kind === "addressed" ? (
+            <p className={styles.spoken} data-testid="addressed">
+              {text.didNotCatch}
+            </p>
+          ) : null}
+        </div>
+
         {view.location ? (
           <p className={styles.location} data-testid="location">
             {view.location}
-          </p>
-        ) : null}
-
-        {spoken ? (
-          <p className={styles.next} data-testid="spoken" data-rule={voice.state.kind === "answering" ? voice.state.rule : undefined}>
-            {spoken}
-          </p>
-        ) : view.nextThing ? (
-          <p className={styles.next} data-testid="next-thing">
-            {view.nextThing}
-          </p>
-        ) : null}
-
-        {voice.state.kind === "addressed" ? (
-          <p className={styles.location} data-testid="addressed">
-            {text.didNotCatch}
           </p>
         ) : null}
       </div>
@@ -137,7 +182,9 @@ export function RoomScreen({ data, policy, serverNow, wizard, clock, light }: Ro
         className={styles.mic}
         data-testid="mic-state"
         data-transmitting={voice.transmitsAudio ? "true" : "false"}
+        data-listening={voice.state.kind === "off" ? "false" : "true"}
       >
+        <span className={styles.micDot} aria-hidden="true" />
         {voice.state.kind === "off" ? text.micOff : text.micOn}
       </p>
 

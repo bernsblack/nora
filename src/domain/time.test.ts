@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   dayAndPartOfDay,
   isSameZonedDay,
+  parseLocalDateTime,
   partOfDay,
   spokenClock,
   zonedDateAt,
@@ -91,6 +92,34 @@ describe("zonedDateAt", () => {
     const beforeChange = new Date("2026-03-28T12:00:00Z");
     const afterChange = zonedDateAt(beforeChange, LONDON, 9, 0, 2);
     expect(zonedParts(afterChange, LONDON)).toMatchObject({ day: 30, hour: 9, minute: 0 });
+  });
+});
+
+describe("parseLocalDateTime", () => {
+  it("reads the entered time as the time at the facility", () => {
+    // A family member in London types 15:00 for a visit. The visit is at three
+    // o'clock where their mother lives, which is 13:00 UTC in August.
+    const at = parseLocalDateTime("2026-08-04T15:00", JOHANNESBURG);
+    expect(at?.toISOString()).toBe("2026-08-04T13:00:00.000Z");
+  });
+
+  it("does not care what the browser or the server thinks the zone is", () => {
+    const johannesburg = parseLocalDateTime("2026-08-04T15:00", JOHANNESBURG);
+    const london = parseLocalDateTime("2026-08-04T15:00", LONDON);
+    expect(johannesburg?.getTime()).not.toBe(london?.getTime());
+    expect(zonedParts(johannesburg!, JOHANNESBURG).hour).toBe(15);
+    expect(zonedParts(london!, LONDON).hour).toBe(15);
+  });
+
+  it("accepts the seconds some browsers add", () => {
+    expect(parseLocalDateTime("2026-08-04T15:00:00", JOHANNESBURG)?.toISOString()).toBe(
+      "2026-08-04T13:00:00.000Z",
+    );
+  });
+
+  it("returns null for anything it cannot read, rather than a wrong date", () => {
+    expect(parseLocalDateTime("", JOHANNESBURG)).toBeNull();
+    expect(parseLocalDateTime("next tuesday", JOHANNESBURG)).toBeNull();
   });
 });
 
