@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img">
+  <title>Placeholder portrait, pieter</title>
+  <rect width="600" height="600" fill="#C98A4B"/>
+  <circle cx="300" cy="235" r="105" fill="#7A3B18"/>
+  <path d="M300 360c-105 0-190 74-190 165v75h380v-75c0-91-85-165-190-165z" fill="#7A3B18"/>
+</svg>

@@ -1,0 +1,196 @@
+/*
+ * Room screen layout. Every size and colour comes from a custom property that
+ * design/room-theme.ts emits, so there is exactly one place where a font size
+ * or a contrast pairing is decided, and a test can check it.
+ *
+ * Nothing here scrolls, nothing here navigates, and nothing here animates
+ * except a slow crossfade. Movement in a room reads as a person in the room.
+ */
+
+/*
+ * The day line gets the full width on its own row. Afrikaans compounds the day
+ * and the part of the day into one unbreakable word, "Saterdagmiddag", which is
+ * wider than a column and cannot be wrapped. It is also the most important line
+ * on the screen, so it is the one that should have the room.
+ */
+.room {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: auto 1fr;
+  align-items: center;
+  align-content: center;
+  gap: clamp(24px, 4vw, 72px);
+  padding: clamp(32px, 5vw, 96px);
+  overflow: hidden;
+
+  background: var(--room-surface);
+  color: var(--room-ink);
+  font-family: var(--room-font);
+  font-weight: var(--room-weight);
+  letter-spacing: var(--room-tracking);
+  line-height: 1.15;
+
+  /* A kiosk gets touched by accident. Nothing here is selectable or draggable. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: none;
+}
+
+/* One column on a portrait tablet or a phone sized preview. */
+@media (max-aspect-ratio: 1/1) {
+  .room {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .photoFrame {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+.column {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.5vw, 40px);
+  min-width: 0;
+}
+
+.day {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  font-size: var(--room-fs-day-and-part-of-day);
+  margin: 0;
+  text-wrap: balance;
+  /* Last resort. A wrapped word is bad, a word running off the screen is worse. */
+  overflow-wrap: anywhere;
+}
+
+.location {
+  font-size: var(--room-fs-location);
+  color: var(--room-ink-soft);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.next {
+  font-size: var(--room-fs-next-thing);
+  margin: 0;
+  text-wrap: balance;
+  /* The crossfade is the only movement on this screen. */
+  animation: fade var(--room-crossfade) ease-in-out;
+}
+
+.photoFrame {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1.5vw, 28px);
+  align-items: center;
+  min-width: 0;
+}
+
+.photo {
+  width: 100%;
+  max-height: 45vh;
+  object-fit: cover;
+  border-radius: 12px;
+  animation: fade var(--room-crossfade) ease-in-out;
+}
+
+.caption {
+  font-size: var(--room-fs-photo-caption);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.mic {
+  position: absolute;
+  bottom: clamp(16px, 2vw, 40px);
+  right: clamp(16px, 2vw, 40px);
+  margin: 0;
+  font-size: var(--room-fs-mic-state);
+  color: var(--room-ink-soft);
+}
+
+/*
+ * A recogniser that sends audio off the device gets a visibly different
+ * indicator. Nobody should be able to walk past this screen and not know.
+ */
+.mic[data-transmitting="true"]::after {
+  content: " \2022";
+  color: var(--room-accent);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next,
+  .photo {
+    animation: none;
+  }
+}
+
+/*
+ * Whatever has gone wrong is ours, and the person in the room cannot act on it.
+ * They see a quiet screen. A member of staff who looks closely sees a marker.
+ */
+.fallback {
+  grid-template-columns: 1fr;
+  background: var(--room-surface, #fbf3e7);
+}
+
+.fallbackMark {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7a2e0c;
+  opacity: 0.35;
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+
+/* The Wizard of Oz control. Never rendered without the query parameter. */
+.wizard {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.wizardInput {
+  flex: 1;
+  font-size: 18px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.wizardButton {
+  font-size: 18px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 6px;
+  font-family: inherit;
+  cursor: pointer;
+}

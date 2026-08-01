@@ -1,0 +1,36 @@
+/*
+ * Shared reset only. The room screen brings its own palette and type scale from
+ * design/room-theme.ts, and the family app brings its own from app.module.css.
+ * Nothing global sets a colour, because the two surfaces have different jobs
+ * and different constraints.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}

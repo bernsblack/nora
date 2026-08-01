@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The loop matters more than the code (PROJECT.md section 11, step 0). This runs
+# on every pull request alongside the Vercel preview deploy, so a change that
+# breaks the contrast floor or the answer policy fails before anybody looks at
+# the preview.
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run test
+
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
