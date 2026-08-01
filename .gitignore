@@ -49,3 +49,7 @@ next-env.d.ts
 
 # generated artifacts, regenerate with pnpm run screenshots
 /screenshots/
+
+# claude code local state. The harness itself is committed under claude/ and
+# symlinked here by scripts/setup-claude.sh on pnpm install.
+/.claude/

@@ -51,7 +51,27 @@ src/app/room/     The room screen
 src/app/app/      The family app
 e2e/              Playwright, including the contrast and legibility checks
 personas/         Five people who would use this, and their questions as tests
+claude/           The agent harness: rules, specialist reviewers, copy skill
 ```
+
+## The harness
+
+`claude/` holds the rules, reviewers and skills that constrain how this codebase gets
+changed. It is committed. `.claude/` is generated from it by `scripts/setup-claude.sh`,
+which runs from the pnpm `prepare` hook on a fresh clone, and is gitignored. After
+pulling a change that adds a rule or an agent, run `pnpm run prepare`.
+
+| Where | What |
+| --- | --- |
+| `claude/rules/` | Path-triggered rules. `answer-policy`, `voice`, `room-screen`, `testing`, `markdown`, `agent-panel` |
+| `claude/agents/` | Six read-only specialist reviewers |
+| `claude/skills/panel.md` | `/panel`, which sizes a review to the change and fans the reviewers out |
+| `claude/skills/nora-copy/` | Every word a person reads or hears, in both languages |
+
+The reviewers exist because two of this product's requirements cannot be checked by any
+test. Nothing in CI can fail a screen for sounding impatient, and the person the device is
+for cannot report a defect. Ported from `equip-platform` and rewritten; see
+[claude/agents/README.md](claude/agents/README.md).
 
 ## Personas
 
