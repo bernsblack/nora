@@ -52,6 +52,8 @@ src/app/app/      The family app
 e2e/              Playwright, including the contrast and legibility checks
 personas/         Five people who would use this, and their questions as tests
 claude/           The agent harness: rules, specialist reviewers, copy skill
+worklog/          One folder per task, and the index that outlives every session
+docs/             What holds up the brief
 ```
 
 ## The harness
@@ -72,6 +74,17 @@ The reviewers exist because two of this product's requirements cannot be checked
 test. Nothing in CI can fail a screen for sounding impatient, and the person the device is
 for cannot report a defect. Ported from `equip-platform` and rewritten; see
 [claude/agents/README.md](claude/agents/README.md).
+
+## Worklog and traceability
+
+`worklog/` holds one folder per non-trivial task: `plan.md` so a fresh session can resume
+without the conversation, and `errors.md` so an incident becomes a constraint instead of
+becoming familiar. [`worklog/INDEX.md`](worklog/INDEX.md) is the ledger, and its rows are
+deliberately long, because it is the only artifact that survives every context reset.
+
+[`docs/traceability.md`](docs/traceability.md) maps every requirement in PROJECT.md to the
+test that holds it up. Six of them are held up by nothing, which is the useful half of the
+document.
 
 ## Personas
 

@@ -9,6 +9,8 @@
 | `claude/rules/*.md` | Rules, each declaring `paths:` frontmatter |
 | `claude/agents/*.md` | Six read-only specialist reviewers, convened by `/panel` |
 | `claude/skills/*.md` | `/panel` for review, `nora-copy` for anything a person reads or hears |
+| `worklog/` | One folder per non-trivial task: `plan.md` to resume from, `errors.md` to ratchet from. `INDEX.md` is the ledger |
+| `docs/traceability.md` | Which PROJECT.md requirement is held up by which test, and the six that nothing holds |
 | `scripts/setup-claude.sh` | Symlinks the above into `.claude/`, from the pnpm `prepare` hook |
 
 `claude/` is committed. `.claude/` is generated and gitignored. Change a rule in `claude/`, never in `.claude/`.
@@ -26,6 +28,7 @@ The rules declare `paths:` frontmatter so they can load automatically. **Do not 
 | `src/app/room/**`, `src/design/**`, `src/lib/contrast.ts` | [`claude/rules/room-screen.md`](claude/rules/room-screen.md) |
 | any `*.test.ts`, `*.spec.ts`, `e2e/**`, `personas/**` | [`claude/rules/testing.md`](claude/rules/testing.md) |
 | any `*.md` | [`claude/rules/markdown.md`](claude/rules/markdown.md) |
+| `worklog/**` | [`claude/rules/worklog.md`](claude/rules/worklog.md) |
 | deciding how much review a change needs | [`claude/rules/agent-panel.md`](claude/rules/agent-panel.md) |
 
 Each rule carries the reason a constraint exists, and most of them exist because something already went wrong in exactly that file. They are worth the read even when the change looks small.
@@ -53,6 +56,12 @@ These are the ones that are cheap to violate by accident. The full set is PROJEC
 - **No em dashes anywhere**, including code comments and commit messages. Straight quotes only.
 - **Magic numbers become named constants** in `src/config/constants.ts`, with the reason beside them. Font floors, contrast ratios, dim thresholds, buffer length, confidence thresholds are product decisions and should read as such.
 
-## Reviewing your own work
+## Working on something non-trivial
 
-Run `/panel` before calling a Medium or larger change done. Sizing and composition are in `claude/rules/agent-panel.md`. A panel is advisory and never overrides a rule.
+1. Copy `worklog/_template/` to `worklog/YYYY-MM-DD-slug/`, write `plan.md`, add a row to `worklog/INDEX.md`. Trivial work skips this.
+2. Work the plan. Log incidents to `errors.md` as they happen, not afterwards.
+3. `pnpm run check`, and `pnpm run e2e` if anything rendered changed.
+4. Run `/panel` before calling a Medium or larger change done. Sizing and composition are in `claude/rules/agent-panel.md`. A panel is advisory and never overrides a rule.
+5. Run the closing step in `plan.md`: promote the durable part out of the folder, then set the status in `INDEX.md`.
+
+Rewrite `plan.md`'s **Current state** before the session ends. A fresh session must be able to resume from `PROJECT.md` and that file alone.
