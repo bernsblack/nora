@@ -50,7 +50,23 @@ src/services/     Everything with a vendor behind it
 src/app/room/     The room screen
 src/app/app/      The family app
 e2e/              Playwright, including the contrast and legibility checks
+personas/         Five people who would use this, and their questions as tests
 ```
+
+## Personas
+
+`personas/` holds five people who would use Nora, three residents and two family
+members, with the questions they would ask. The residents' questions are not
+prose: every one of them runs through the real matcher and the real answer
+engine in `personas/personas.test.ts`.
+
+The first run failed seven of thirty nine, and all seven were defects. The worst
+of them was that "where is my husband", the sentence PROJECT.md uses as its
+example of the hardest question in the product, produced silence, because
+subject recognition matched names and not relationships. See
+[personas/FINDINGS.md](personas/FINDINGS.md).
+
+Read [personas/README.md](personas/README.md) first.
 
 ## Checks
 
@@ -66,6 +82,7 @@ Some of the tests are enforcing product constraints rather than code behaviour, 
 - `e2e/room.spec.ts` checks font size, weight, tracking, contrast and overflow as rendered in a browser at tablet size.
 - `src/domain/answer-policy/policy.test.ts` covers all three hard floors on the grief path across every mode.
 - `src/domain/voice/privacy.test.ts` scans the mode one source for any API that could capture, store, or transmit audio, and fails if one appears.
+- `personas/personas.test.ts` runs what five invented but specific people would say through the whole voice path, and is the only suite written from outside the implementation.
 
 ## Two things worth knowing before going further
 

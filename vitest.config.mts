@@ -9,7 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "personas/**/*.test.ts"],
     // Browser tests live in e2e/ and run under Playwright.
     exclude: ["e2e/**", "node_modules/**"],
   },

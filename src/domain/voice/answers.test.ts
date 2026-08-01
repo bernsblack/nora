@@ -13,6 +13,7 @@ import { zonedDateAt } from "../time";
 import type { Language, ScheduleEntry } from "../types";
 import { answerFor } from "./answers";
 import { matchIntent } from "./matcher";
+import { knownSubjects } from "./subjects";
 
 /**
  * Mode one's answers, checked against the data the screen renders. If one of
@@ -50,7 +51,7 @@ function data(): RoomData {
 function ask(heard: string, asked = true) {
   const roomData = data();
   const match = matchIntent(heard, {
-    knownNames: ["Jan", "Anna", "Hannie"],
+    subjects: knownSubjects(roomData, fixtureAnswerPolicy()),
     languages: LANGUAGES,
   });
   if (!match) throw new Error(`Nothing matched: ${heard}`);
@@ -109,7 +110,7 @@ describe("the dial decides what is shown, not what may be answered", () => {
     const view = buildRoomView(roomData, NOW);
     expect(view.location).toBeNull();
 
-    const match = matchIntent("waar is ek", { knownNames: [], languages: LANGUAGES })!;
+    const match = matchIntent("waar is ek", { subjects: [], languages: LANGUAGES })!;
     const answer = answerFor(match, {
       data: roomData,
       policy: null,
@@ -144,7 +145,7 @@ describe("nothing to report is not a disappointment", () => {
   it("says a quiet day rather than naming what is missing", () => {
     const roomData = data();
     roomData.entries = [];
-    const match = matchIntent("kom iemand", { knownNames: [], languages: LANGUAGES })!;
+    const match = matchIntent("kom iemand", { subjects: [], languages: LANGUAGES })!;
     const answer = answerFor(match, { data: roomData, policy: null, now: NOW, asked: true });
     expect(answer.rule).toBe("when-is-visit-none");
     expect(answer.speak).toBe("'n Rustige dag.");

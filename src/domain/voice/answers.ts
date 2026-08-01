@@ -1,7 +1,7 @@
 import { NEXT_THING_HORIZON_MINUTES } from "@/config/constants";
 import { phrases } from "@/i18n/strings";
 import { answerSensitive, type PolicyAnswer } from "../answer-policy/policy";
-import type { RoomData } from "../room-view";
+import { buildRoomView, type RoomData } from "../room-view";
 import { dayAndPartOfDay, spokenClock } from "../time";
 import { resolveText, type AnswerPolicy, type Language, type ScheduleEntry } from "../types";
 import { trimToSpokenLength } from "../answer-policy/wording";
@@ -102,6 +102,14 @@ export function answerFor(match: IntentMatch, context: AnswerContext): PolicyAns
         happening ? text.visitNow(name) : text.visitAt(name, spokenClock(visit.startsAt, timezone)),
         happening ? "when-is-visit-now" : "when-is-visit",
       );
+    }
+
+    case "what-happens-next": {
+      // Literally the line on the screen, so the answer and the screen cannot
+      // disagree even in principle.
+      const view = buildRoomView(data, now, language);
+      const next = view.nextThing ?? text.quietDay;
+      return speak(next, "what-happens-next");
     }
 
     case "where-is-person":

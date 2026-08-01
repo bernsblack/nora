@@ -5,6 +5,7 @@ import { LIGHT_BEFORE_SOUND_MS } from "@/config/constants";
 import { answerFor } from "@/domain/voice/answers";
 import { RollingTranscriptBuffer } from "@/domain/voice/buffer";
 import { decide, matchIntent } from "@/domain/voice/matcher";
+import { knownSubjects } from "@/domain/voice/subjects";
 import type { RoomData } from "@/domain/room-view";
 import type { AnswerPolicy } from "@/domain/types";
 import {
@@ -68,19 +69,10 @@ export function useVoice(options: UseVoiceOptions): UseVoiceResult {
   const recognizer = useRef<SpeechRecognizer | null>(null);
 
   /**
-   * Names the matcher may recognise: people the family configured as sensitive
-   * topics, people on the photos, and expected visitors. Nothing else counts as
-   * a name, because inventing a subject from a misheard word is how a device
-   * ends up saying something about a stranger.
+   * Who the matcher may recognise being asked about, with the relationships
+   * they get asked for by. See domain/voice/subjects.ts.
    */
-  const knownNames = useMemo(() => {
-    const fromTopics = policy?.topics.map((topic) => topic.subjectName) ?? [];
-    const fromPhotos = data.photos.map((photo) => photo.name);
-    const fromVisits = data.entries
-      .map((entry) => entry.visitorName)
-      .filter((name): name is string => Boolean(name));
-    return [...new Set([...fromTopics, ...fromPhotos, ...fromVisits])];
-  }, [policy, data.photos, data.entries]);
+  const subjects = useMemo(() => knownSubjects(data, policy), [data, policy]);
 
   const handle = useCallback(
     (heard: string) => {
@@ -88,7 +80,7 @@ export function useVoice(options: UseVoiceOptions): UseVoiceResult {
       buffer.push(heard, at.getTime());
 
       const match = matchIntent(buffer.read(at.getTime()), {
-        knownNames,
+        subjects,
         languages: data.person.languages,
       });
 
@@ -121,7 +113,7 @@ export function useVoice(options: UseVoiceOptions): UseVoiceResult {
         void speaker.current?.speak(toSay, match.language);
       }, LIGHT_BEFORE_SOUND_MS);
     },
-    [buffer, data, knownNames, now, policy],
+    [buffer, data, subjects, now, policy],
   );
 
   useEffect(() => {

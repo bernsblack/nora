@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { INTENT_ADDRESSED_THRESHOLD, INTENT_SPEAK_THRESHOLD } from "@/config/constants";
 import type { Language } from "../types";
-import { INTENTS } from "./intents";
-import { decide, matchIntent, tokenise } from "./matcher";
+import { INTENTS, SUBJECT_SLOT } from "./intents";
+import { MIN_EVIDENCE_TOKENS, decide, matchIntent, tokenise } from "./matcher";
 
 const LANGUAGES: Language[] = ["af", "en"];
-const KNOWN_NAMES = ["Jan", "Anna", "Hannie"];
+const SUBJECTS = [
+  { name: "Jan", aliases: ["jou man", "my man", "your husband", "my husband"] },
+  { name: "Anna", aliases: ["jou dogter", "my dogter"] },
+  { name: "Hannie", aliases: [] },
+];
 
 function match(heard: string) {
-  return matchIntent(heard, { knownNames: KNOWN_NAMES, languages: LANGUAGES });
+  return matchIntent(heard, { subjects: SUBJECTS, languages: LANGUAGES });
 }
 
 describe("every shipped phrasing matches its own intent", () => {
@@ -18,9 +22,29 @@ describe("every shipped phrasing matches its own intent", () => {
     for (const language of LANGUAGES) {
       for (const phrasing of intent.phrasings[language]) {
         it(`${intent.id} (${language}): "${phrasing}"`, () => {
-          const result = match(phrasing);
+          // A phrasing with a slot in it is never said literally. Put a real
+          // person in the slot, which is what the matcher will see.
+          const said = phrasing.replaceAll(SUBJECT_SLOT, "Jan");
+          const result = match(said);
           expect(result?.intent).toBe(intent.id);
           expect(result?.score).toBeGreaterThanOrEqual(INTENT_SPEAK_THRESHOLD);
+        });
+      }
+    }
+  }
+});
+
+describe("no phrasing is too thin to act on", () => {
+  // A phrasing that survives stopword removal with a single content token can
+  // never clear the speak threshold, because one shared word is a coincidence
+  // rather than evidence. It would still drag unrelated speech into the middle
+  // band on the way, so it is worse than useless.
+  for (const intent of INTENTS) {
+    for (const language of LANGUAGES) {
+      for (const phrasing of intent.phrasings[language]) {
+        it(`${intent.id} (${language}): "${phrasing}"`, () => {
+          const tokens = tokenise(phrasing.replaceAll(SUBJECT_SLOT, "Jan"), language);
+          expect(tokens.length).toBeGreaterThanOrEqual(MIN_EVIDENCE_TOKENS);
         });
       }
     }
