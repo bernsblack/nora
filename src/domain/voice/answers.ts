@@ -1,6 +1,6 @@
 import { NEXT_THING_HORIZON_MINUTES } from "@/config/constants";
 import { phrases } from "@/i18n/strings";
-import { answerSensitive, type PolicyAnswer } from "../answer-policy/policy";
+import { answerSensitive, findTopic, type PolicyAnswer } from "../answer-policy/policy";
 import { buildRoomView, type RoomData } from "../room-view";
 import { dayAndPartOfDay, spokenClock } from "../time";
 import { resolveText, type AnswerPolicy, type Language, type ScheduleEntry } from "../types";
@@ -93,6 +93,29 @@ export function answerFor(match: IntentMatch, context: AnswerContext): PolicyAns
             entry.visitorName?.toLowerCase() === match.subjectName.toLowerCase()),
       );
       if (!visit) {
+        /*
+         * Nobody is coming. Before that becomes "a quiet day", check whether
+         * the person asked about is one the family configured a topic for,
+         * because "when is Jan coming" about a dead husband is the same
+         * question as "where is Jan" and has to go through the same policy.
+         * Answering it from an empty schedule said "a quiet day", which under
+         * truthfulness states he is not coming today.
+         */
+        const topic = match.subjectName ? findTopic(context.policy, match.subjectName) : null;
+        if (topic) {
+          return answerSensitive(
+            {
+              intent: "when-is-person-coming",
+              subjectName: match.subjectName,
+              language,
+              languages: data.person.languages,
+              asked: context.asked,
+              facilityName: data.facility.name,
+            },
+            context.policy,
+          );
+        }
+
         // No visit is not a disappointment to be narrated. It is a quiet day.
         return speak(text.quietDay, "when-is-visit-none");
       }

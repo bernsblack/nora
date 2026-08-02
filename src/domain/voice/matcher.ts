@@ -149,6 +149,12 @@ export function matchIntent(heard: string, options: MatchOptions): IntentMatch |
     if (heardTokens.length === 0) continue;
 
     for (const intent of INTENTS) {
+      // An intent that turns on specific words is not considered at all until
+      // one of them is present. See the note on Intent.requires.
+      if (intent.requires && !intent.requires[language].some((token) => heardTokens.includes(token))) {
+        continue;
+      }
+
       for (const phrasing of intent.phrasings[language]) {
         // A phrasing with a slot in it means nothing when no subject was found.
         if (phrasing.includes(SUBJECT_SLOT) && !filled.subjectName) continue;

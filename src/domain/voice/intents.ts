@@ -40,6 +40,22 @@ export interface Intent {
    * subject out of the utterance before an answer can be built.
    */
   carriesSubject?: boolean;
+  /**
+   * At least one of these has to be in what was heard before any phrasing here
+   * is scored at all.
+   *
+   * Scoring is a bag of words, so an intent whose phrasings differ from a
+   * completely different sentence by one noun cannot defend itself: "ek wil
+   * toilet toe gaan" was answered with the going home line because it shares
+   * four words of five with "ek wil huis toe gaan". The missing word is the
+   * entire meaning, and this is where that gets said out loud rather than left
+   * to the arithmetic.
+   *
+   * Use it only where the intent genuinely turns on specific words. Most do
+   * not, and a required token list on a question that can be asked many ways
+   * is a recall bug waiting to happen.
+   */
+  requires?: Record<Language, string[]>;
 }
 
 export const INTENTS: Intent[] = [
@@ -75,6 +91,14 @@ export const INTENTS: Intent[] = [
     },
   },
   {
+    /*
+     * "is this my house" and "is dit my huis" were removed. A bag of words
+     * cannot tell a question from the assertion with the same words in a
+     * different order, so "dit is my huis", which is a woman insisting she is
+     * at home and asking nothing, scored 1.00 and was answered with a facility
+     * name and a room number. Contradicting her unprompted is worse than
+     * missing the question, and the question survives in the forms below.
+     */
     id: "where-am-i",
     phrasings: {
       en: [
@@ -87,7 +111,6 @@ export const INTENTS: Intent[] = [
         "what place is this",
         "am i at home",
         "where do i live",
-        "is this my house",
       ],
       af: [
         "waar is ek",
@@ -98,12 +121,23 @@ export const INTENTS: Intent[] = [
         "wie se huis is dit",
         "is ek by die huis",
         "waar bly ek",
-        "is dit my huis",
       ],
     },
   },
   {
+    /*
+     * The clock phrasings live here, and they are why this intent needs a
+     * required token. Taking "what time is it" out of the day intent moved the
+     * defect rather than closing it: it landed on "what time is lunch" at 0.767
+     * and the device answered the time with a meal. A question about the hour
+     * is one we do not answer at all, and now the only way into this intent is
+     * to name a meal or the act of eating.
+     */
     id: "when-is-meal",
+    requires: {
+      en: ["lunch", "breakfast", "supper", "dinner", "tea", "eat", "eaten", "food"],
+      af: ["middagete", "ontbyt", "aandete", "tee", "eet", "geeet", "kos"],
+    },
     phrasings: {
       en: [
         "when is lunch",
@@ -222,7 +256,16 @@ export const INTENTS: Intent[] = [
     carriesSubject: true,
   },
   {
+    /*
+     * Required tokens because every phrasing here is one noun away from an
+     * ordinary sentence about going somewhere else. "ek wil toilet toe gaan"
+     * scored 0.80 and "wanneer gaan ek dood" scored 0.75, and both were
+     * answered "you are staying here, you are safe", which to the woman who
+     * needs the toilet reads as a refusal and to the woman asking whether she
+     * is dying is not a thing a device may answer at all.
+     */
     id: "going-home",
+    requires: { en: ["home", "leave"], af: ["huis", "weg"] },
     phrasings: {
       en: [
         "when am i going home",

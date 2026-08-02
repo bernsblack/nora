@@ -196,6 +196,58 @@ export const SCENARIOS: Scenario[] = [
     note: "Nothing scripted may answer this. It is a person's job, not a device's.",
   },
 
+  /*
+   * Added by the panel run on 2026-08-02, and every score was verified against
+   * the live matcher before it was written down. Each of these sits one word
+   * from a scenario above that already passes, which is the whole finding: the
+   * suite was drifting inside the implementation it exists to test.
+   */
+
+  {
+    id: "marta-jan-coming",
+    persona: "marta",
+    said: "wanneer kom Jan",
+    expect: "answer",
+    intent: "when-is-visit",
+    mustNotSay: ["rustige dag"],
+    note: "marta-jan-coming-back without the closing terug. It used to answer from the schedule, find nothing, and say a quiet day about a dead husband, which under truthfulness states he is not coming today. It stays classified as a visit question, because by form it is one and Anna asked the same way is a real visit. What changed is that an empty schedule now checks for a configured topic and hands over to the answer policy. The assertion that matters is mustNotSay, not the intent id.",
+  },
+  {
+    id: "marta-clock",
+    persona: "marta",
+    said: "hoe laat is dit",
+    expect: "silence",
+    note: "The screen deliberately never shows a clock face, so the hour is not a question this device answers. Its English twin is spoken aloud, see trevor-clock.",
+  },
+  {
+    id: "marta-toilet",
+    persona: "marta",
+    said: "ek wil toilet toe gaan",
+    expect: "silence",
+    note: "One token from ek wil huis toe gaan, and it scores 0.80. The most urgent ordinary sentence in a care home bedroom, answered with a reassurance about staying put that reads as a refusal.",
+  },
+  {
+    id: "marta-dying-full",
+    persona: "marta",
+    said: "wanneer gaan ek dood",
+    expect: "silence",
+    note: "marta-am-i-dying with one word changed. That one stays quiet at 0.55, this one scores 0.75 and is answered with the going-home line.",
+  },
+  {
+    id: "marta-handbag-sentence",
+    persona: "marta",
+    said: "ek weet nie waar ek my handsak gesit het nie",
+    expect: "silence",
+    note: "The handbag question in the form a person actually says it. marta-handbag is genuinely fixed; this is the same defect returning at 0.775, because waar and ek together are the whole of waar is ek.",
+  },
+  {
+    id: "marta-asserting-home",
+    persona: "marta",
+    said: "dit is my huis",
+    expect: "silence",
+    note: "Not a question. She is insisting, and it scores 1.00 against is dit my huis, so she is contradicted by facility name and room number having asked nothing.",
+  },
+
   /* Trevor. Early stage, full insight, and openly sceptical of the device. */
 
   {
@@ -270,6 +322,27 @@ export const SCENARIOS: Scenario[] = [
     expect: "silence",
     note: "He wants it off and there is no spoken way to do it. Only his family can, from the app.",
   },
+  {
+    id: "trevor-clock",
+    persona: "trevor",
+    said: "what time is it",
+    expect: "silence",
+    note: "Answered aloud with the next meal at 0.767, against what time is lunch. The clock phrasings were taken out of the day intent as a fix and put into meals, which moved the defect rather than closing it.",
+  },
+  {
+    id: "trevor-glasses",
+    persona: "trevor",
+    said: "i don't know where i put my glasses",
+    expect: "silence",
+    note: "Contains where and i, which is the whole of where am i, so it scores 0.775 and answers with the care home. He would notice, which is the only reason we would ever hear about it.",
+  },
+  {
+    id: "trevor-lovely-day",
+    persona: "trevor",
+    said: "what a lovely day it is today",
+    expect: "silence",
+    note: "A remark, not a question, scoring 0.925 against what is today. Two content tokens in any order anywhere inside thirty are currently enough to make the device speak.",
+  },
 
   /* Halina. Polish first language, which the device does not have. */
 
@@ -315,6 +388,13 @@ export const SCENARIOS: Scenario[] = [
     said: "prosze, prosze, boje sie",
     expect: "silence",
     note: "Please, please, I am frightened. This needs a person in the room, not a device.",
+  },
+  {
+    id: "halina-fragment-husband",
+    persona: "halina",
+    said: "where Stefan",
+    expect: "silence",
+    note: "Two words, in exactly the register her own file documents, scoring 1.00 into the grief path. It speaks English about her dead husband in the room of a woman with late stage Lewy body who sees a man in the corner most evenings. The fragment that works for her and the fragment that breaks her are the same shape, which is why halina-fragment-english is not the reassurance it looks like.",
   },
 ];
 
