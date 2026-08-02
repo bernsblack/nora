@@ -43,4 +43,49 @@ for skill_dir in "$repo_root"/claude/skills/*/; do
   link_if_absent "${skill_dir%/}" "$repo_root/.claude/skills/$(basename "$skill_dir")"
 done
 
+# Versioned hooks. .claude/settings.json is gitignored per-user state, so these
+# are MERGED in with jq rather than written over the top, and the merge is keyed
+# by the script path so re-running never duplicates a registration.
+#
+# Needs jq. Without it the hooks are skipped silently: they make the handoff
+# load bearing rather than advisory, but the root instructions file still asks
+# for the same things, so a machine without jq degrades rather than breaks.
+register_hook() {
+  event="$1"
+  script="$2"
+
+  [ -f "$script" ] || return 0
+  chmod +x "$script" 2>/dev/null || true
+
+  # Already registered anywhere in settings, under any event.
+  if jq -e --arg cmd "$script" \
+       '[.. | objects | .command? // empty] | index($cmd)' \
+       "$settings" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  tmp="$settings.tmp.$$"
+  if jq --arg cmd "$script" --arg event "$event" '
+        .hooks //= {} |
+        .hooks[$event] //= [] |
+        .hooks[$event] += [ { "hooks": [ { "type": "command", "command": $cmd } ] } ]
+      ' "$settings" > "$tmp" 2>/dev/null; then
+    mv "$tmp" "$settings" 2>/dev/null || rm -f "$tmp" 2>/dev/null
+  else
+    rm -f "$tmp" 2>/dev/null
+  fi
+}
+
+setup_hooks() {
+  command -v jq >/dev/null 2>&1 || return 0
+
+  settings="$repo_root/.claude/settings.json"
+  [ -f "$settings" ] || echo '{}' > "$settings" 2>/dev/null || return 0
+
+  register_hook SessionStart "$repo_root/claude/hooks/session-start.sh"
+  register_hook SessionEnd "$repo_root/claude/hooks/session-end.sh"
+}
+
+setup_hooks
+
 exit 0

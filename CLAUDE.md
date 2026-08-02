@@ -1,6 +1,6 @@
 # Nora
 
-**Start with [handoff/NEXT.md](handoff/NEXT.md).** It is short, it is the last session's note to this one, and it says whether anything is in flight. It records the commit it was written at: if `git log` has moved past that commit, treat it as stale and verify before acting on it.
+**Start with [handoff/NEXT.md](handoff/NEXT.md).** It is short, it is the last session's note to this one, and it says whether anything is in flight. A `SessionStart` hook normally injects it above, already carrying a staleness verdict computed from git. If it is not there, read it, and check the commit in its header against `git log` yourself.
 
 **Then read [PROJECT.md](PROJECT.md) in full before writing anything.** It is the brief and it wins over this file, over the harness in `claude/`, and over anything a reviewer says.
 
@@ -14,6 +14,7 @@ End a session with `/goodbye`, which updates the active worklog and writes the n
 | `claude/agents/*.md` | Six read-only specialist reviewers, convened by `/panel` |
 | `claude/skills/*.md` | `/panel` for review, `/goodbye` to end a session, `nora-copy` for anything a person reads or hears |
 | `handoff/NEXT.md` | The last session's note to this one. Read first, written by `/goodbye` |
+| `claude/hooks/` | `SessionStart` injects the handoff, `SessionEnd` leaves a breadcrumb after an ungraceful exit. Merged into `.claude/settings.json` by the setup script |
 | `worklog/` | One folder per non-trivial task: `plan.md` to resume from, `errors.md` to ratchet from. `INDEX.md` is the ledger |
 | `docs/traceability.md` | Which PROJECT.md requirement is held up by which test, and the six that nothing holds |
 | `scripts/setup-claude.sh` | Symlinks the above into `.claude/`, from the pnpm `prepare` hook |

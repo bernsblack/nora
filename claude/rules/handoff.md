@@ -55,3 +55,19 @@ They are not the same thing and neither replaces the other.
 Use `/goodbye`. It reads the session, updates the active `plan.md` and `errors.md`, archives the previous handoff into `handoff/log/`, and writes the new one.
 
 Writing `NEXT.md` by hand is fine. Writing it vaguely is not.
+
+## The two hooks, and the one job each has
+
+Registered into `.claude/settings.json` by `scripts/setup-claude.sh` from `claude/hooks/`. Both need `jq` and both fail open without it.
+
+**`session-start.sh`** injects this file into the session before the first prompt, with the staleness verdict already computed. It exists because reading the handoff was previously a request in the instructions file competing with everything else in there, and because comparing a hash to `HEAD` and remembering that one commit ahead is expected is arithmetic rather than judgement. It reports fresh, stale with a count, an unresolvable commit, or a missing one, and appends the uncommitted file count.
+
+**`session-end.sh`** writes a breadcrumb to `handoff/log/` when a session ends with work that was never handed off, and writes **nothing** when the tree is clean and up to date, so an ordinary `/clear` leaves no residue.
+
+**The breadcrumb is not a handoff and the file it writes says so.** `SessionEnd` cannot inject context and has no decision control, so by the time it runs the model is out of the loop and nothing can be asked of it. It records facts: timestamp, `HEAD`, commits past the last handoff, and the dirty file list. It cannot say what was being attempted or what should happen next, which is the entire value of a real handoff.
+
+That distinction is worth defending. A file that looks like a handoff and contains no judgement is exactly what teaches people to stop trusting the ones that do.
+
+`SessionEnd` hooks share a 1.5 second budget and are not guaranteed to run on a crash, so that script is a couple of git calls and nothing else. It is a backstop for the ungraceful exit, never a substitute for `/goodbye`.
+
+There is deliberately no `Stop` hook. It could nag when the handoff has gone stale, but it fires every time a response finishes, and a reminder that fires too often is one people learn to ignore. Add it only if forgetting `/goodbye` turns out to be a real problem rather than a predicted one.

@@ -91,6 +91,11 @@ document.
 `/goodbye` and read first. It records the commit it was written at, so a session can tell
 when it has gone stale rather than acting on a description of a repo that has moved on.
 
+Two hooks in `claude/hooks/` make that load bearing rather than advisory. `SessionStart`
+injects the handoff before the first prompt with the staleness verdict already computed from
+git. `SessionEnd` leaves a facts-only breadcrumb when a session ends with work that was
+never handed off, and stays silent otherwise. Both need `jq` and both fail open without it.
+
 ## Personas
 
 `personas/` holds five people who would use Nora, three residents and two family
