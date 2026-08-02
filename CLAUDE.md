@@ -1,6 +1,10 @@
 # Nora
 
-**Read [PROJECT.md](PROJECT.md) in full before writing anything.** It is the brief and it wins over this file, over the harness in `claude/`, and over anything a reviewer says.
+**Start with [handoff/NEXT.md](handoff/NEXT.md).** It is short, it is the last session's note to this one, and it says whether anything is in flight. It records the commit it was written at: if `git log` has moved past that commit, treat it as stale and verify before acting on it.
+
+**Then read [PROJECT.md](PROJECT.md) in full before writing anything.** It is the brief and it wins over this file, over the harness in `claude/`, and over anything a reviewer says.
+
+End a session with `/goodbye`, which updates the active worklog and writes the next handoff.
 
 ## The harness
 
@@ -8,7 +12,8 @@
 | --- | --- |
 | `claude/rules/*.md` | Rules, each declaring `paths:` frontmatter |
 | `claude/agents/*.md` | Six read-only specialist reviewers, convened by `/panel` |
-| `claude/skills/*.md` | `/panel` for review, `nora-copy` for anything a person reads or hears |
+| `claude/skills/*.md` | `/panel` for review, `/goodbye` to end a session, `nora-copy` for anything a person reads or hears |
+| `handoff/NEXT.md` | The last session's note to this one. Read first, written by `/goodbye` |
 | `worklog/` | One folder per non-trivial task: `plan.md` to resume from, `errors.md` to ratchet from. `INDEX.md` is the ledger |
 | `docs/traceability.md` | Which PROJECT.md requirement is held up by which test, and the six that nothing holds |
 | `scripts/setup-claude.sh` | Symlinks the above into `.claude/`, from the pnpm `prepare` hook |
@@ -29,6 +34,7 @@ The rules declare `paths:` frontmatter so they can load automatically. **Do not 
 | any `*.test.ts`, `*.spec.ts`, `e2e/**`, `personas/**` | [`claude/rules/testing.md`](claude/rules/testing.md) |
 | any `*.md` | [`claude/rules/markdown.md`](claude/rules/markdown.md) |
 | `worklog/**` | [`claude/rules/worklog.md`](claude/rules/worklog.md) |
+| `handoff/**` | [`claude/rules/handoff.md`](claude/rules/handoff.md) |
 | deciding how much review a change needs | [`claude/rules/agent-panel.md`](claude/rules/agent-panel.md) |
 
 Each rule carries the reason a constraint exists, and most of them exist because something already went wrong in exactly that file. They are worth the read even when the change looks small.
@@ -63,5 +69,6 @@ These are the ones that are cheap to violate by accident. The full set is PROJEC
 3. `pnpm run check`, and `pnpm run e2e` if anything rendered changed.
 4. Run `/panel` before calling a Medium or larger change done. Sizing and composition are in `claude/rules/agent-panel.md`. A panel is advisory and never overrides a rule.
 5. Run the closing step in `plan.md`: promote the durable part out of the folder, then set the status in `INDEX.md`.
+6. `/goodbye` before stopping. It rewrites `plan.md`'s **Current state** and writes the next handoff.
 
-Rewrite `plan.md`'s **Current state** before the session ends. A fresh session must be able to resume from `PROJECT.md` and that file alone.
+A fresh session must be able to resume from `handoff/NEXT.md`, `PROJECT.md`, and the active `plan.md` alone. If it cannot, the session did not end properly.

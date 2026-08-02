@@ -53,6 +53,7 @@ e2e/              Playwright, including the contrast and legibility checks
 personas/         Five people who would use this, and their questions as tests
 claude/           The agent harness: rules, specialist reviewers, copy skill
 worklog/          One folder per task, and the index that outlives every session
+handoff/          Where the last session left off, read at the start of the next
 docs/             What holds up the brief
 ```
 
@@ -85,6 +86,10 @@ deliberately long, because it is the only artifact that survives every context r
 [`docs/traceability.md`](docs/traceability.md) maps every requirement in PROJECT.md to the
 test that holds it up. Six of them are held up by nothing, which is the useful half of the
 document.
+
+[`handoff/NEXT.md`](handoff/NEXT.md) is the last session's note to the next one, written by
+`/goodbye` and read first. It records the commit it was written at, so a session can tell
+when it has gone stale rather than acting on a description of a repo that has moved on.
 
 ## Personas
 
