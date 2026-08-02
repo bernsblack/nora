@@ -52,7 +52,9 @@ if [ "$git_ok" -eq 1 ]; then
   fi
 
   dirty="$(git -C "$repo_root" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-  if [ "${dirty:-0}" -gt 0 ]; then
+  if [ "${dirty:-0}" -eq 1 ]; then
+    verdict="${verdict} There is 1 uncommitted change in the working tree."
+  elif [ "${dirty:-0}" -gt 1 ]; then
     verdict="${verdict} There are ${dirty} uncommitted changes in the working tree."
   fi
 fi
