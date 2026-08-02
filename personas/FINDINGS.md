@@ -116,6 +116,22 @@ What actually distinguishes them is the word that was stripped. "where **am** i"
 
 **Still open.** `marta-handbag-sentence`, `trevor-glasses`, `trevor-lovely-day` and `halina-fragment-husband` remain red.
 
+### Three mechanisms were measured, and all three are dead ends
+
+Each was implemented against the real suite and reverted. Recorded because the next person will otherwise try them in the same order.
+
+**A minimum precision floor.** Inverted, as above. No value separates the cases.
+
+**Keeping the copulas.** Taking `is`, `am`, `are`, `do` and their Afrikaans counterparts off the stopword lists closes `marta-handbag-sentence` and `trevor-glasses`, because the phrasings then carry three tokens and a partial match no longer saturates. It does **not** close `trevor-lovely-day` or `halina-fragment-husband`, and it **breaks `halina-fragment-english`**: "day, what day" falls to 0.67, into the addressed band. The trade is two false positives closed for the loss of the only utterance in the folder that works for Halina.
+
+**Requiring a shared adjacent pair.** Word order is the only thing separating "what day is it" from "what a lovely day it is today", and "where is Stefan" from "where Stefan". Adding an adjacency gate on its own changes **nothing at all**, because stopword removal has already collapsed the phrasings to exactly the pair the false positive contains: `where is <subject>` is `[where, xsubjectx]`, which "where Stefan" contains, adjacent. Adjacency only becomes a real signal in combination with keeping the copulas, and that combination still leaves Halina's fragment in the addressed band on recall.
+
+### What that adds up to
+
+**Every mechanism that protects Halina's husband costs Halina's day fragment.** It has now been shown three separate ways, and it is a property of scoring a two token phrasing against a two token utterance rather than a bug in any of the three attempts.
+
+The fragment that works for her and the fragment that harms her are the same shape, and no scorer that reads them as bags of words can treat them differently. Closing the remaining four means either accepting that she loses her only working route, or scoring something other than a bag of words. That is a product decision and it is recorded as open in the plan.
+
 ## 9. The clock fix moved the defect instead of closing it
 
 Finding 5 above removed clock phrasings from `what-day-is-it` and added "what time is lunch" and "what time is supper" to `when-is-meal`. That second half is what broke it: "what time is it" now scores **0.767** against "what time is lunch" and is spoken aloud as the next meal. Asked the time, the device says "Tea at 3."

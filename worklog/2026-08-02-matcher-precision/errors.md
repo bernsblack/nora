@@ -34,6 +34,14 @@ These are incidents in the *previous* task's work, surfaced by the panel run tha
 - **Proposed guide or sensor:** none needed for the catch, which worked. The transferable lesson is about the plan rather than the code: a threshold in a plan should name the case it must **not** break alongside the cases it must close, and this one named only the latter. Worth a line wherever numbers get proposed.
 - **Now enforced by:** `matcher.test.ts`, which already did its job.
 
+## Two more proposed fixes were measured and reverted, and one of them was mine
+
+- **What went wrong:** after the precision floor, two further mechanisms were tried against the real suite. Keeping the copulas out of the stopword lists closes two of the four remaining failures and breaks `halina-fragment-english`, dropping it to 0.67. A shared adjacent pair requirement, proposed as the way to bring word order into a bag of words scorer, changes nothing whatsoever on its own.
+- **Root cause:** for the adjacency gate, stopword removal has already collapsed the phrasings to the very pair the false positive contains. `where is <subject>` is `[where, xsubjectx]` and "where Stefan" contains exactly that, adjacent, so the gate it was supposed to fail is one it passes. The mechanism was reasoned about at the level of the written phrasing rather than the tokens the scorer actually sees.
+- **How it was caught:** the persona suite, immediately, in both cases. Neither survived a single run.
+- **Proposed guide or sensor:** the pattern across all three attempts is that each was reasoned about in terms of the phrasings as written and each behaved differently once tokenised. The cheap habit that would have caught all three in minutes rather than in three implement-and-revert cycles is to print the token arrays first and reason about those. `tokenise` is exported and this is a two line probe.
+- **Now enforced by:** nothing, and it probably should not be a rule. It is a working habit rather than a constraint on the code.
+
 ## An e2e test passes or fails depending on the time of day it is run
 
 - **What went wrong:** `pnpm run e2e` returned 38 passed, 1 failed. `e2e/room.spec.ts` "location clears the contrast target as rendered" measured 5.74 against a target of 7. The handoff records this suite as 39 green at `97092db`.
