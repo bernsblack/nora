@@ -18,13 +18,20 @@ Commits `ffe80d0` and the one this folder lands in.
 - [x] `nora-copy`, with voice, Afrikaans, English and per surface references
 - [x] Worklog: `INDEX.md`, `_template/`, `claude/rules/worklog.md`, four folders backfilled
 - [x] `docs/traceability.md`: which PROJECT.md requirement is held up by what
-- [x] Verify: `pnpm run check`
+- [x] Session handoff: `handoff/NEXT.md`, `claude/rules/handoff.md`, `/goodbye`
+- [x] Two hooks: `SessionStart` injects the handoff with a computed staleness verdict, `SessionEnd` leaves a facts-only breadcrumb. Merged into the generated settings file by the setup script
+- [x] Verify: `pnpm run check`, 466 green
+- [x] Verify: `pnpm run e2e`, 39 green
 
 ## Current state
 
-- **Done:** all of it.
-- **Next:** run `/panel` on the persona work, `git diff 40803b6..6326e6c`. It exercises sizing, fan out and synthesis against a change whose defects are already known, which is the only honest way to find out whether the roster works or invents things.
-- **Open decisions:** none.
+- **Done:** all of it. Rules, six reviewers, `/panel`, `nora-copy`, the worklog with four folders backfilled, the traceability map, the handoff, `/goodbye`, and both hooks. Every staleness path in the start hook was exercised by running it, not by reading it.
+- **Next:** run `/panel` on the persona work, `git diff 40803b6..6326e6c`. It exercises sizing, fan out and synthesis against a change whose defects are already documented, which is the only honest way to find out whether the roster works or invents things. Alternatively the four cheap tests in `docs/traceability.md`.
+- **Open decisions:** none. One thing deliberately not built: a `Stop` hook to nag about a stale handoff, left out because it fires on every response and a reminder that fires too often is one people learn to ignore. Revisit only if forgetting `/goodbye` proves to be a real problem.
+
+## What is built but unproven
+
+**No reviewer has produced a finding yet.** Six agent definitions, a panel skill that sizes and synthesises, and nothing has run through any of it. Until `/panel` runs once on a diff with known defects, the roster is an assertion.
 
 ## Closing step
 
