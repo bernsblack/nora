@@ -10,10 +10,15 @@ import { InMemoryRepository } from "@/data/memory-repository";
  * route is gone, and browser tests will need a branch database per run instead,
  * which is what the Neon branch per PR is for.
  */
-export async function POST(): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   if (usingDatabase()) {
     return new Response("Not available with a database configured", { status: 404 });
   }
-  setRepository(new InMemoryRepository());
+
+  // ?setup=incomplete gives back a person nobody has chosen an answer policy
+  // for, which is the state the setup flow exists to handle and the one the
+  // ordinary fixtures cannot express, because they ship a decided person.
+  const setup = new URL(request.url).searchParams.get("setup");
+  setRepository(new InMemoryRepository(new Date(), { answerPolicy: setup !== "incomplete" }));
   return new Response(null, { status: 204 });
 }

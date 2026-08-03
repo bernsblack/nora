@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getRepository } from "@/data";
 import { validateFamilyWording } from "@/domain/answer-policy/wording";
@@ -32,10 +33,25 @@ async function assertAccess(personId: string): Promise<boolean> {
 
 function refresh(personId: string): void {
   revalidatePath(`/app/${personId}`);
+  // The setup route reads the answer policy to decide whether to ask at all, so
+  // it goes stale in the one direction that matters: asking a family that has
+  // already decided to decide again.
+  revalidatePath(`/app/${personId}/setup`);
   revalidatePath("/room");
 }
 
 const DENIED = failed([], "That is not your person to change");
+
+/**
+ * Refused because nobody has chosen an answer policy yet.
+ *
+ * `domain/setup` reads the absence of the record as "not decided", so any write
+ * that creates it decides on the family's behalf. Only `completeSetup` may.
+ */
+const NOT_SET_UP = failed(
+  ["Choose what to say about someone who has died before setting up who they ask about."],
+  "Not saved",
+);
 
 function localized(af: string | undefined, en: string | undefined): LocalizedText {
   const text: LocalizedText = {};
@@ -242,13 +258,64 @@ export async function saveDefaultMode(
 
   const repository = getRepository();
   const existing = await repository.getAnswerPolicy(parsed.data.personId);
+  // Same rule as saveTopic. Changing the choice is this action's job, making it
+  // for the first time is setup's.
+  if (!existing) return NOT_SET_UP;
   await repository.saveAnswerPolicy({
     personId: parsed.data.personId,
     defaultMode: parsed.data.defaultMode,
-    topics: existing?.topics ?? [],
+    topics: existing.topics,
   });
   refresh(parsed.data.personId);
   return ok("Saved.");
+}
+
+/**
+ * The setup choice. Same write as saveDefaultMode, different contract.
+ *
+ * `defaultMode` here has no fallback and no default anywhere in the chain: not
+ * in the column, not in the form, not in this schema. A submission that carries
+ * no mode is refused rather than quietly resolved, because PROJECT.md section 6
+ * asks for "an explicit choice, not a default they discover later" and a
+ * default applied on the server is exactly the thing being ruled out.
+ *
+ * The form uses radios with none checked for the same reason. A select always
+ * has something selected, so a select cannot express "not yet answered".
+ */
+const setupSchema = z.object({
+  personId: z.string().min(1),
+  defaultMode: z.enum(ANSWER_POLICY_MODES, {
+    message: "Choose what Nora should do. There is no default for this one.",
+  }),
+});
+
+export async function completeSetup(_state: FormState, formData: FormData): Promise<FormState> {
+  const raw = formData.get("defaultMode");
+  if (typeof raw !== "string" || raw.length === 0) {
+    return failed(
+      ["Choose what Nora should do when they ask about someone who has died."],
+      "Not saved",
+    );
+  }
+
+  const parsed = setupSchema.safeParse({
+    personId: formData.get("personId"),
+    defaultMode: raw,
+  });
+  if (!parsed.success) return invalid(parsed.error);
+  if (!(await assertAccess(parsed.data.personId))) return DENIED;
+
+  const repository = getRepository();
+  const existing = await repository.getAnswerPolicy(parsed.data.personId);
+  await repository.saveAnswerPolicy({
+    personId: parsed.data.personId,
+    defaultMode: parsed.data.defaultMode,
+    // Setup never clears work already done. Re-running it changes the default
+    // and leaves any per person wording exactly as it was.
+    topics: existing?.topics ?? [],
+  });
+  refresh(parsed.data.personId);
+  redirect(`/app/${parsed.data.personId}`);
 }
 
 const topicSchema = z.object({
@@ -288,7 +355,14 @@ export async function saveTopic(_state: FormState, formData: FormData): Promise<
   if (!person) return failed(["Could not find this person."]);
 
   const existing = await repository.getAnswerPolicy(input.personId);
-  const defaultMode = existing?.defaultMode ?? "gentle-redirection";
+  // Only setup may create this record. Writing one here with a mode nobody
+  // picked is the column default that answer_policies deliberately does not
+  // have, moved into an action: the row's existence is what domain/setup reads
+  // as "a family has decided", so creating it here would end setup on their
+  // behalf and pick gentle redirection for them. A server action is a public
+  // endpoint, so this cannot rest on the redirect in the page.
+  if (!existing) return NOT_SET_UP;
+  const defaultMode = existing.defaultMode;
   const mode = input.mode === "" ? undefined : input.mode;
   const familyWording = localized(input.wordingAf, input.wordingEn);
 

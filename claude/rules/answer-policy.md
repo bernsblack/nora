@@ -39,6 +39,14 @@ Moving a check earlier can only widen what gets spoken. Adding one at the top ne
 
 Both are required. Removing either is a regression even though nothing goes red.
 
+## Setup is where the choice is made, and absence is the signal
+
+`src/domain/setup.ts` treats **the absence of an answer policy row** as "nobody has decided yet", which is why `answer_policies.default_mode` deliberately has no column default. Give that column a default and the question becomes unanswerable: every person arrives already holding a choice nobody made, and a deliberate `gentle-redirection` becomes indistinguishable from an untouched one.
+
+`/app/[personId]` redirects to `/app/[personId]/setup` while that row is missing, and the setup form uses **radios with none checked rather than a select**, because a select always has a value and therefore cannot express "not answered yet". The server refuses a submission carrying no mode as well, so the guarantee does not live in an HTML attribute.
+
+The engine's fallback to gentle redirection exists so the device is safe before setup. It is not a stand-in for a decision, and nothing may treat it as evidence that one was made.
+
 ## Defaults and modes
 
 - Default when nothing is set is `gentle-redirection`, never correction. PROJECT.md is explicit that the family sets this as a deliberate choice at setup and does not discover it later.

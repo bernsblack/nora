@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
-import { getRepository } from "@/data";
-import { DEFAULT_MODE } from "@/domain/answer-policy/policy";
+import { notFound, redirect } from "next/navigation";
+import { getRepository, usingDatabase } from "@/data";
+import { setupComplete } from "@/domain/setup";
 import {
   ANSWER_POLICY_MODES,
   LANGUAGES,
@@ -68,7 +68,14 @@ export default async function PersonPage({ params }: PageProps) {
   const facility = await repository.getFacility(person.facilityId);
   if (!facility) notFound();
 
-  const [entries, notes, photos, voiceMessages, policy, devices, calendars] = await Promise.all([
+  // Setup is not a screen a family member can walk past. PROJECT.md section 6
+  // requires the answer policy to be an explicit choice at setup rather than a
+  // default discovered later, and settings pages are where defaults go to be
+  // discovered later. setupComplete narrows, so everything below has a policy.
+  const policy = await repository.getAnswerPolicy(personId);
+  if (!setupComplete(policy)) redirect(`/app/${personId}/setup`);
+
+  const [entries, notes, photos, voiceMessages, devices, calendars] = await Promise.all([
     repository.listScheduleEntries(
       personId,
       new Date(now.getTime() - DAY_MS),
@@ -77,7 +84,6 @@ export default async function PersonPage({ params }: PageProps) {
     repository.listNotes(personId),
     repository.listPhotos(personId),
     repository.listVoiceMessages(personId),
-    repository.getAnswerPolicy(personId),
     repository.listDeviceTokens(personId),
     repository.listCalendarSubscriptions(personId),
   ]);
@@ -145,7 +151,17 @@ function PreviewSection({
             </p>
             <div className={styles.links}>
               <a href={`/room?token=${token}`}>Open it full size</a>
-              <a href={`/room?token=${token}&lux=2`}>See it at night</a>
+              {/*
+                Only offered where it works. `?lux=` is honoured on fixtures and
+                ignored once a database is configured, because a query parameter
+                that dims a resident's screen at midday is a stranger changing
+                what they see. Left in place, this link would quietly render the
+                daytime screen and tell a daughter that is what her mother's
+                room looks like at three in the morning.
+              */}
+              {usingDatabase() ? null : (
+                <a href={`/room?token=${token}&lux=2`}>See it at night</a>
+              )}
               <a href={`/room?token=${token}&wizard=1`}>Try talking to it</a>
             </div>
           </div>
@@ -266,10 +282,17 @@ function AnswerPolicySection({
   policy,
 }: {
   person: Person;
-  policy: AnswerPolicy | null;
+  /*
+   * Never null. PersonPage redirects to setup while it is, so this section only
+   * ever renders for a family who decided. The type says so on purpose: it used
+   * to be nullable with a `?? DEFAULT_MODE` fallback, which is the defect this
+   * flow removed, a select pre-selecting gentle redirection and presenting it
+   * as the family's decision.
+   */
+  policy: AnswerPolicy;
 }) {
-  const topics = policy?.topics ?? [];
-  const fallbackMode = policy?.defaultMode ?? DEFAULT_MODE;
+  const topics = policy.topics;
+  const fallbackMode = policy.defaultMode;
 
   return (
     <section className={`${styles.section} ${styles.policy}`}>
@@ -299,8 +322,14 @@ function AnswerPolicySection({
 
       {topics.length === 0 ? (
         <p className={styles.empty}>
-          Nobody set up yet. Until then, anyone {person.preferredName} asks about is answered with
-          the choice above.
+          {/*
+            This used to say the choice above was applied to anyone she asked
+            about, which is not what happens: answerSensitive returns
+            unknown-subject-redirect for a subject with no topic, before the
+            mode is read. The choice matters once somebody is written down.
+          */}
+          Nobody written down yet. Until you add someone, {person.voiceName} says the same gentle
+          thing about anyone {person.preferredName} asks after, whichever choice you made above.
         </p>
       ) : (
         <ul className={styles.list}>

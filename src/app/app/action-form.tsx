@@ -70,6 +70,18 @@ export function ActionForm({
         named.checked = sent.has(named.name);
         continue;
       }
+      /*
+       * Radios carry their answer in `checked`, not in `value`. Falling through
+       * to the assignment below would set every radio sharing a name to the one
+       * value that was submitted, so three options with three different labels
+       * would all submit the same thing, and the next click would save a mode
+       * the family member never chose. On the answer policy that is the wrong
+       * sentence said to somebody about whether their husband is alive.
+       */
+      if (named instanceof HTMLInputElement && named.type === "radio") {
+        named.checked = sent.get(named.name) === named.value;
+        continue;
+      }
       const value = sent.get(named.name);
       if (typeof value === "string") named.value = value;
     }

@@ -425,6 +425,73 @@
   margin: 0;
 }
 
+/*
+ * The setup choice. Radios rather than a select, because a select always has
+ * something selected and this question has no default by design. Laid out as
+ * full width cards so each option is read rather than skimmed: a family member
+ * is deciding what their mother will be told about her husband, on a phone,
+ * probably while doing something else.
+ */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.choicesLegend {
+  font-size: 14px;
+  color: var(--ink-soft);
+  padding: 0;
+  margin-bottom: 10px;
+}
+
+.choice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.choice:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.choice input {
+  margin-top: 3px;
+  flex: none;
+  /* Comfortably tappable, and large enough to see which one is selected. */
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.choice > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 15px;
+  min-width: 0;
+}
+
+.choiceDetail {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
 .thumb {
   width: 52px;
   height: 52px;
