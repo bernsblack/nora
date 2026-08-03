@@ -50,7 +50,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | No audio transmitted in mode one | `privacy.test.ts` never calls fetch from the mode one path | enforced |
 | The buffer is in memory for seconds and overwritten | `TRANSCRIPT_BUFFER_MS`, `TRANSCRIPT_BUFFER_MAX_ENTRIES`; `privacy.test.ts` holds text and only for the window, empties on silence without anybody reading it, is bounded, drops everything on clear | enforced |
 | A microphone switch the family controls | `family.spec.ts` turning the microphone off says so on the room screen | enforced |
-| Mic state visible from across the room | `room.spec.ts` says what the microphone is doing in words; `mic-state` is in the size and weight loop; does not claim to transmit when it is not | enforced |
+| Mic state visible from across the room | `room.spec.ts` says what the microphone is doing in words; `mic-state` is in the size and weight loop; does not claim to transmit when it is not; says whether sound is leaving the room in words rather than by the colour of a dot, which at night was no signal at all because accent and inkSoft are the same value | enforced |
 | Works with no network | the fetch ban plus serialising the day once; `public/sw.js` caches the last good render; `room.offline.spec.ts` reloads the room screen with the network off and asserts the day, the location and the caption survive, and that the day still tracks the device clock | enforced |
 
 ## Section 6, what Nora says about the dead
