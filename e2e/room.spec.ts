@@ -183,6 +183,23 @@ test.describe("the microphone is never a secret", () => {
     await page.goto(ROOM_URL);
     await expect(page.getByTestId("mic-state")).toHaveAttribute("data-transmitting", "false");
   });
+
+  test("says whether sound is leaving the room, in words and not in a colour", async ({
+    page,
+  }) => {
+    // Until 2026-08-03 the only difference between transmitting and not was the
+    // fill of a 13px dot, and in the night palette accent and inkSoft are the
+    // same value, so at night there was no difference at all. WCAG 1.4.1, and
+    // more to the point a person is entitled to know what leaves the room.
+    await page.goto(ROOM_URL);
+    const mic = page.getByTestId("mic-state");
+    const transmitting = (await mic.getAttribute("data-transmitting")) === "true";
+    const words = (await mic.textContent()) ?? "";
+
+    // The words and the attribute have to agree, whichever state this build is
+    // in. Cloud ASR is off by default, so normally this is the quiet branch.
+    expect(/klank|sound/i.test(words)).toBe(transmitting);
+  });
 });
 
 test.describe("an unknown device", () => {

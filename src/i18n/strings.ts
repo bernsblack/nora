@@ -39,6 +39,20 @@ export interface Phrases {
   /** Microphone state, shown on the room screen and readable across the room. */
   micOn: string;
   micOff: string;
+  /**
+   * Listening, and sending sound off the device.
+   *
+   * In words, because the only thing that distinguished this state was the
+   * colour of a small dot, and in the night palette accent and inkSoft are the
+   * same value, so it was not distinguished at all. PROJECT.md section 5 asks
+   * for a mic state indicator visible from across the room, and a person is
+   * entitled to know that what they say is leaving the room.
+   *
+   * This state should never occur in a room with a resident in it: it needs
+   * NEXT_PUBLIC_ALLOW_CLOUD_ASR, which exists for testing with the team's own
+   * voices. It is still said plainly rather than left to a colour.
+   */
+  micTransmitting: string;
 }
 
 const en: Phrases = {
@@ -57,6 +71,7 @@ const en: Phrases = {
   goingHome: (facility) => `You are staying at ${facility} for now. You are safe here.`,
   micOn: "Listening",
   micOff: "Microphone off",
+  micTransmitting: "Listening, sending sound away",
 };
 
 const af: Phrases = {
@@ -75,6 +90,10 @@ const af: Phrases = {
   goingHome: (facility) => `Jy bly vir eers by ${facility}. Jy is veilig hier.`,
   micOn: "Luister",
   micOff: "Mikrofoon af",
+  // Provisional, like every Afrikaans string here, and flagged for a native
+  // speaker. "stuur ... weg" is the separable verb, verb second in a main
+  // clause, and it is not a calque of the English phrasing.
+  micTransmitting: "Luister, stuur klank weg",
 };
 
 const PHRASES: Record<Language, Phrases> = { en, af };

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 /**
  * Scopes the web app manifest to the room device.
@@ -11,6 +11,14 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   manifest: "/room/manifest.webmanifest",
+};
+
+/** A kiosk that can be pinch zoomed is a kiosk that will be found zoomed in. */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RoomLayout({ children }: { children: React.ReactNode }) {

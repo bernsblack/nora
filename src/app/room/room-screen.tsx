@@ -7,7 +7,7 @@ import { buildRoomView } from "@/domain/room-view";
 import { deserializeRoomData, type SerializedRoomData } from "@/domain/serialize";
 import { zonedParts } from "@/domain/time";
 import type { AnswerPolicy } from "@/domain/types";
-import { phrases } from "@/i18n/strings";
+import { phrases, type Phrases } from "@/i18n/strings";
 import { roomThemeCss } from "@/design/room-theme";
 import {
   MockAmbientLight,
@@ -116,6 +116,9 @@ export function RoomScreen({
       data-language={view.language}
       data-photo={view.photo ? "true" : "false"}
       data-lines={hasLines ? "true" : "false"}
+      // The document is lang="en" and this screen renders Afrikaans. Assistive
+      // tech is expected here: the answer slot is aria-live, deliberately.
+      lang={view.language}
       data-testid="room"
     >
       <style dangerouslySetInnerHTML={{ __html: roomThemeCss(lighting.palette, inkDim) }} />
@@ -185,12 +188,26 @@ export function RoomScreen({
         data-listening={voice.state.kind === "off" ? "false" : "true"}
       >
         <span className={styles.micDot} aria-hidden="true" />
-        {voice.state.kind === "off" ? text.micOff : text.micOn}
+        {micLabel(text, voice.state.kind === "off", voice.transmitsAudio)}
       </p>
 
       {wizard ? <WizardControl onSay={voice.say} /> : null}
     </div>
   );
+}
+
+/**
+ * What the microphone line says.
+ *
+ * Three states, not two. Whether audio leaves the device used to be carried
+ * only by the colour of a small dot, and in the night palette accent and
+ * inkSoft are the same value, so at night there was no difference at all. A
+ * person is entitled to know in words that what they say is leaving the room,
+ * and PROJECT.md section 5 asks for an indicator readable from across it.
+ */
+function micLabel(text: Phrases, off: boolean, transmitting: boolean): string {
+  if (off) return text.micOff;
+  return transmitting ? text.micTransmitting : text.micOn;
 }
 
 /**

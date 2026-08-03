@@ -14,12 +14,15 @@ export const metadata: Metadata = {
   description: "",
 };
 
+/*
+ * Zoom stays available here. Disabling it is right for the kiosk and wrong for
+ * the family app, whose reader is a presbyopic daughter on a phone deciding
+ * what her mother will be told about her husband. That is WCAG 1.4.4, and the
+ * kiosk-only version now lives in app/room/layout.tsx where it belongs.
+ */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // A kiosk that can be pinch zoomed is a kiosk that will be found zoomed in.
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({
