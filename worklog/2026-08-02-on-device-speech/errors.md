@@ -10,6 +10,14 @@ No code was written, so these are findings about the harness rather than inciden
 - **Proposed guide or sensor:** state the scan's boundary in `claude/rules/voice.md` and in the test's own doc comment, in the form "this holds for TypeScript under `src/domain/voice/`, and nothing enforces it anywhere else." Then, if a native or WASM audio path is ever adopted, the first commit of it extends the scan or replaces it.
 - **Now enforced by:** nothing yet. Worth doing regardless of whether this spec goes anywhere, because it is a claim in three documents backed by a mechanism narrower than the claim.
 
+## The generated rules are copies, not symlinks, and every document says symlinks
+
+- **What went wrong:** CLAUDE.md, `claude/rules/handoff.md` and `scripts/setup-claude.sh`'s own description all say `claude/` is symlinked into `.claude/`. On this machine `.claude/rules/voice.md` is a regular file. The script's line is `ln -s "$target" "$linkpath" 2>/dev/null || true`, which swallows the failure, and something copies instead.
+- **Root cause:** the `|| true` was presumably there so a fresh clone does not fail hard. It also means the difference between a working symlink and a silent copy is invisible.
+- **How it was caught:** luck, while checking something unrelated at the end of a session. The contents happened to be in sync because `pnpm run prepare` had just run.
+- **Proposed guide or sensor:** it matters because the documented workflow is "change a rule in `claude/`, never in `.claude/`", and with copies that edit does not reach the running agent until `prepare` runs again. So an agent can edit a rule, believe it is live, and be working from the old one for the rest of the session. Either make the script fail loudly when the symlink cannot be created, or say plainly in CLAUDE.md that these may be copies and that `pnpm run prepare` is required after any rule edit.
+- **Now enforced by:** nothing. Not investigated further, and it is not this task's work. Recorded because it is the same shape as the privacy scan above: a mechanism narrower than the claim three documents make for it.
+
 ## An external spec arrived scoped to a platform the brief had already rejected
 
 - **What went wrong:** the spec is an iOS and Android native plan. PROJECT.md section 9 puts the room device on a PWA in Android kiosk mode and lists "native app first" under what was rejected, with a reason. A reader who started from the spec would not learn that.
