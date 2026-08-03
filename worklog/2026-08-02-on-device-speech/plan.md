@@ -65,9 +65,31 @@ It answers PROJECT.md section 5's open question in the defensible direction: **t
 
 The disagreement is about when, on what platform, and on what evidence. Not about whether.
 
+## The matcher question turned out to be this question
+
+Added 2026-08-03. This task started as speech in and speech out. It now also carries **what does the matching**, because the two collapsed into one question.
+
+`worklog/2026-08-02-matcher-precision/` closed three blockers and then hit a wall: four persona scenarios that no bag of words scorer can close, demonstrated by implementing and reverting three separate mechanisms. Every one that protects Halina's dead husband costs Halina's day fragment, because both are a short fragment partially matching a short phrasing.
+
+That is not a tuning problem. Intent classification from noisy, wandering, code-switched speech by an elderly person with dysarthria is a thing models are good at and hand-written token overlap is bad at, and the four red scenarios are the evidence.
+
+**The decision taken, and its boundary:**
+
+- The matcher is a candidate for replacement by a small model doing **intent classification and subject extraction**.
+- **The answer policy is not.** Classification is not generation. A model may decide which intent was heard and who was named; it hands off to the scripted policy in `src/domain/answer-policy/` unchanged. The three floors stay branches with tests, because a prompt instruction is a probabilistic constraint on output nobody can prove, and this is the path that decides what a woman believes about whether her husband is alive.
+- **A cloud call cannot be mode one.** No network, and `LIGHT_BEFORE_SOUND_MS` is 700ms. So this is an on-device model question, which is the same hardware and cost question this task already had, for a second model alongside Whisper and Piper.
+- **Silence is the wrong shape for a language model.** Its failure mode is fluency and this product's required failure mode is saying nothing. Whether a candidate can abstain is the first property to measure, ahead of accuracy.
+
+**Mastra.** PROJECT.md section 9 rejected it conditionally: "Not yet. The invoked path is a few lines of AI SDK and the local intent set is a match statement, not a workflow. Revisit when we need an eval harness, which we will, because tone and the grief policy need regression tests." **That condition has now been met.** `personas/` is an eval harness that grew by hand, and it is the most valuable thing in the repo. Revisit Mastra for that, not for the matcher.
+
+Worth stating plainly: replacing the matcher makes the persona suite non-deterministic. Forty-nine crisp pass and fail scenarios become a scored eval. That is normal for model work and it is a real change to how this repo knows it is correct, and it is the strongest argument for having an eval harness before making the swap rather than after.
+
+**No evidence yet** on how a small on-device model handles Afrikaans intent classification for elderly dysarthric speech. That needs measuring exactly like Whisper does. Asserting it would repeat the mistake this task was opened to criticise.
+
 ## Steps
 
 - [x] Review the spec against PROJECT.md and the harness, and write the critique above
+- [x] Record the decision that the matcher is a model candidate and the answer policy is not, and promote it into `claude/rules/voice.md`
 - [ ] **Settle the platform question first.** Native is a reversal of PROJECT.md section 9 and has to be taken deliberately or not at all. Until it is, this task cannot move past evaluation. **Blocked on a human**
 - [ ] Build a small Afrikaans evaluation corpus from **consenting adults**, staff and volunteers, including elderly and dysarthric speech. No resident recordings
 - [ ] Measure Whisper `base` and `small`, quantised, for word error rate on that corpus **and for hallucination rate on room silence and non-speech**. The second number is the one that decides this
@@ -75,17 +97,20 @@ The disagreement is about when, on what platform, and on what evidence. Not abou
 - [ ] Produce the hardware cost number PROJECT.md section 5 asks for: a named device, a specification, a unit price
 - [ ] Evaluate the Piper Afrikaans voice with a family member rather than an engineer, and check provenance and licensing
 - [ ] Decide how the three privacy floors are enforced if any audio path leaves TypeScript, before such code exists
+- [ ] **Measure a small model on intent classification**, against the four red persona scenarios plus all 45 that currently pass. Measure its ability to abstain first and its accuracy second. On-device, since a cloud call cannot be mode one
+- [ ] **Revisit Mastra for the eval harness**, which is the condition PROJECT.md section 9 deferred it on and which has now been met. Not for the matcher
 - [ ] Write the result up as an answer to PROJECT.md section 5's open question, and amend section 14
 - [ ] Closing step, below
 
 ## Current state
 
-- **Done:** the critique above. No code, no dependency added, no spike run.
-- **Next:** the platform decision, which is not an engineering call. Everything after it is measurement.
+- **Done:** the critique, and the decision that this task now also owns what does the matching. No code, no dependency added, no spike run.
+- **Next:** the platform decision, which is not an engineering call. Everything after it is measurement. If you want one thing to start with that needs no decision, it is Mastra for the eval harness, because that is wanted whatever happens to Whisper and it is the thing that makes swapping the matcher measurable rather than a leap.
 - **Open decisions:**
-  - **Native versus PWA.** PROJECT.md section 9 defers native until the interaction is validated, and it is not validated. The spec assumes native throughout. Nothing here proceeds until this is settled.
+  - **Native versus PWA.** PROJECT.md section 9 defers native until the interaction is validated, and it is not validated. The spec assumes native throughout. Nothing on the speech half proceeds until this is settled.
   - Whether to evaluate Whisper at all before the interaction is validated, or park the question entirely. Parking it is defensible: the brief asks for a cost number, and a cost number does not require a working integration.
-  - How the privacy floors are enforced outside TypeScript. Needed before any native audio code exists, not after.
+  - How the privacy floors are enforced outside TypeScript. Needed before any native audio code exists, not after. `privacy.test.ts` is a source scan over TypeScript and three documents describe it as making the floors true at code level.
+  - **Whether replacing the matcher is worth the cost at all.** It buys the four red scenarios and a matcher that is not made of stopword lists. It costs a deterministic test suite, a second on-device model, and a new class of failure where the thing deciding what was asked can be confidently wrong. Not decided.
 
 ## Closing step
 

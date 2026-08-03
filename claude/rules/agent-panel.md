@@ -27,6 +27,8 @@ Subagents do **not** inherit the path-triggered `claude/rules/*.md`. Each agent 
 
 A briefing therefore contains the diff or exact `file:line` scope and the mandate. **Do not paste rules into it.**
 
+**Calibrating the roster is the one time a rule gets suppressed, and it must be declared.** `claude/rules/answer-policy.md` tells any reviewer to read `personas/FINDINGS.md` before touching the matcher. For a run whose question is whether the reviewers find real defects or invent plausible ones, that file is the answer key. The first calibration run on 2026-08-02 withheld it from all four briefings. If that is done again, say so in the synthesis: a reader who does not know the reviewers were working blindfolded will misread how much the result is worth.
+
 Two things always hold:
 
 1. **A panel is a lens on top of the harness, never an alternative to it.** A panel never overrides a `claude/rules/*` rule or a requirement in PROJECT.md. At most it flags one as worth revisiting, which is a backlog item and never an in-flight deviation.

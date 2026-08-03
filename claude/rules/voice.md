@@ -47,7 +47,35 @@ Read `personas/FINDINGS.md` before changing `matcher.ts`, `intents.ts` or `subje
 - **`MIN_EVIDENCE_TOKENS` is 2.** One shared token is a coincidence, not evidence. A phrasing that reduces to a single content token matches a large share of everything anybody says.
 - **Every phrasing must survive stopword removal with at least two content tokens.** There is a test that fails the intent set otherwise. Four phrasings were that thin when it was added.
 - **Subjects carry their relationship as an alias, with the possessive swapped.** The family writes "jou man" from the device's side, the resident says "my man" from her own. As the name goes, the relationship is what remains, so this is the form the hardest question in the product usually arrives in.
-- **No clock phrasings.** The screen deliberately never shows a clock face, so the hour is a question this device does not answer. Inviting it in the intent set was a bug in the intent set.
+- **No clock phrasings, and the mechanism is `requires` rather than absence.** The screen deliberately never shows a clock face, so the hour is a question this device does not answer. Deleting the phrasings from the day intent was not enough and made things worse: they were added to `when-is-meal` as the repair, and "what time is it" then scored 0.767 against "what time is lunch" and was answered aloud with the next meal. `Intent.requires` is what actually holds it. An intent that turns on specific words is not scored at all until one of them is heard, so "what time is lunch" still answers and "what time is it" never reaches it.
+- **`Intent.requires` is for intents that are one noun away from an ordinary sentence.** `going-home` carries it because "ek wil toilet toe gaan" shares four words of five with "ek wil huis toe gaan" and was answered "you are staying here, you are safe" to a woman who needed the toilet. Use it only where the intent genuinely turns on specific words. On a question that can be asked many ways it is a recall bug waiting to happen.
+
+### Three mechanisms that do not work, all measured
+
+Do not spend a session rediscovering these. Each was implemented against the real suite and reverted, and the account is in `personas/FINDINGS.md` finding 8.
+
+- **A minimum precision floor is inverted here.** The wandering question that has to keep working sits at 0.250, one false positive at 0.250, the other at 0.500. No value separates them.
+- **Keeping the copulas** closes two false positives and breaks `halina-fragment-english`, dropping "day, what day" to 0.67.
+- **Requiring a shared adjacent pair changes nothing on its own**, because stopword removal has already collapsed each phrasing to exactly the pair the false positive contains. `where is <subject>` is `[where, xsubjectx]`, and "where Stefan" contains that, adjacent.
+
+The through line: **every mechanism that protects Halina's husband costs Halina's day fragment**, because both are a short fragment partially matching a short phrasing. No bag of words scorer can read them differently. Reason about the token arrays and not the phrasings as written; `tokenise` is exported and it is a two line probe.
+
+### Four persona scenarios are red on purpose
+
+`marta-handbag-sentence`, `trevor-glasses`, `trevor-lovely-day` and `halina-fragment-husband` fail, and are not to be fixed by tuning the scorer. They are the standing description of what this approach cannot do, and the acceptance criteria for whatever replaces it. Softening them is the one edit that is never acceptable here.
+
+## The matcher may be replaced by a model. The answer policy may not
+
+Decided 2026-08-03. The matcher is a candidate for replacement by a small model doing intent classification and subject extraction, because that is what it has repeatedly failed at and what a model is good at. See `worklog/2026-08-02-on-device-speech/`.
+
+The line that matters is **classification is not generation**. A model may decide which intent was heard and who was named. It hands off to the scripted answer policy, which stays exactly as it is.
+
+Nothing about the answer policy moves into a prompt. The three floors in `src/domain/answer-policy/` are branches with tests across every mode, and a prompt instruction is a probabilistic constraint on output nobody can prove. For the path that decides what a woman believes about whether her husband is alive, that is a change in kind rather than degree.
+
+Two more things a model does not fix, so do not let it be sold as fixing them:
+
+- **A cloud call cannot be mode one.** No network, and `LIGHT_BEFORE_SOUND_MS` is 700ms. On-device or not at all.
+- **Silence is the wrong shape for a language model.** Its failure mode is fluency, and this product's required failure mode is saying nothing. Whatever replaces the matcher has to be able to abstain, and that is the property to test first.
 
 ## Answers come from the same data the screen renders
 

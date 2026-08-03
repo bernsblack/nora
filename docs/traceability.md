@@ -7,8 +7,11 @@ Status is one of:
 - **enforced**: a test fails if this stops being true
 - **partial**: something holds part of it, and the gap is named
 - **nothing**: prose only. True today because somebody was careful, and nothing notices when they are not
+- **failing**: a test holds it, and the test is red. The requirement is not met and everybody knows
 
 Built by enumerating every test in the repo on 2026-08-01. Update it in the closing step of any task that adds a constraint or a test.
+
+There is one **failing** row, and it is the most important requirement in section 3. Four persona scenarios covering "silence beats a wrong answer" are red on purpose: three attempts at fixing them are recorded in `claude/rules/voice.md`, and they are the acceptance criteria for whatever replaces the matcher rather than a backlog item. A red suite here is not a broken build, and it is also not a requirement that is met.
 
 ## Section 3, the product principles
 
@@ -19,7 +22,7 @@ Built by enumerating every test in the repo on 2026-08-01. Update it in the clos
 | One answer per screen | `room.spec.ts` shows exactly one next thing; `room.voice.spec.ts` shows only one answer at a time; `room-view.test.ts` shows one next thing, singular | enforced |
 | Short spoken answers, one or two sentences | `MAX_SPOKEN_SENTENCES`, `MAX_SPOKEN_WORDS`; `answers.test.ts` stays within the spoken limits, per question; `policy.test.ts` keeps the generated truthful answer to two sentences; `personas.test.ts` never says more than two sentences | enforced |
 | Never quiz | `room-view.test.ts` puts a name under the face, which covers the one manifestation that was thought about. Nothing forbids a recall prompt in a string | partial |
-| Silence beats a wrong answer | `INTENT_SPEAK_THRESHOLD`, `INTENT_ADDRESSED_THRESHOLD`; `matcher.test.ts` ignores speech that is not addressed, treats a partial match as addressed rather than answering it, keeps the two thresholds ordered; `answers.test.ts` says nothing at all when nobody asked; `room.voice.spec.ts` stays quiet when it did not understand; every silence scenario in `personas/scenarios.ts` | enforced |
+| Silence beats a wrong answer | `INTENT_SPEAK_THRESHOLD`, `INTENT_ADDRESSED_THRESHOLD`; `matcher.test.ts` ignores speech that is not addressed, treats a partial match as addressed rather than answering it, keeps the two thresholds ordered; `answers.test.ts` says nothing at all when nobody asked; `room.voice.spec.ts` stays quiet when it did not understand; the silence scenarios in `personas/scenarios.ts`. **Four of those scenarios currently fail**, deliberately: the device speaks to an overheard sentence, to a remark about the weather, and to a two word fragment about a dead husband | **failing** |
 | Light before sound | `LIGHT_BEFORE_SOUND_MS`, used in `use-voice.ts`. No test | **nothing** |
 
 ## Section 4, the room screen

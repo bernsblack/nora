@@ -34,6 +34,14 @@ So: **when a persona scenario fails, the device is wrong.** Write the finding in
 
 New scenarios are welcome and should be awkward on purpose. The utterances are written rather than collected, which is a stated limitation, not a solved problem.
 
+**Four scenarios are red on purpose and are not a broken build.** `marta-handbag-sentence`, `trevor-glasses`, `trevor-lovely-day` and `halina-fragment-husband`. They describe what bag of words matching cannot do, three attempts at fixing them are recorded in `claude/rules/voice.md`, and they are the acceptance criteria for whatever replaces the matcher. A green persona suite is not currently the goal.
+
+### The suite decays if it is written beside the code
+
+The first persona run found that the matcher's own unit tests passed because they used the phrasings the matcher was built from. The panel run a day later found the persona scenarios had started doing the same thing: `marta-am-i-dying` used the one phrasing of the dying question that stayed quiet, and the form one word away was spoken aloud. All four Jan scenarios reduced, after slot filling, to a phrasing the intent set already shipped.
+
+The folder's whole value is being written from outside the implementation, and it stops being outside the moment it is written in the same sitting as the fix. So: **a scenario for a sensitive utterance ships with its nearest neighbour**, the same question one word different. If only one of the two is written, it is probably the one that passes.
+
 ## New domain code ships with its test
 
 Anything in `src/domain/` is pure and has no excuse. Cover the branches, not the happy path: every guard, early return, `??` and thrown error is a branch, and branches are where this codebase has actually been wrong.
