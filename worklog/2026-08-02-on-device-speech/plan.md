@@ -90,7 +90,7 @@ Worth stating plainly: replacing the matcher makes the persona suite non-determi
 
 - [x] Review the spec against PROJECT.md and the harness, and write the critique above
 - [x] Record the decision that the matcher is a model candidate and the answer policy is not, and promote it into `claude/rules/voice.md`
-- [ ] **Settle the platform question first.** Native is a reversal of PROJECT.md section 9 and has to be taken deliberately or not at all. Until it is, this task cannot move past evaluation. **Blocked on a human**
+- [x] **Settle the platform question first.** Native is a reversal of PROJECT.md section 9 and has to be taken deliberately or not at all. **Decided by Bernard on 2026-08-03: the room device stays a PWA and native is parked**, not rejected, until the interaction is validated. PROJECT.md section 9 stands as written. Everything below is measurement, and none of it needs a native shell to produce a number
 - [ ] Build a small Afrikaans evaluation corpus from **consenting adults**, staff and volunteers, including elderly and dysarthric speech. No resident recordings
 - [ ] Measure Whisper `base` and `small`, quantised, for word error rate on that corpus **and for hallucination rate on room silence and non-speech**. The second number is the one that decides this
 - [ ] Measure end-to-end latency on candidate hardware against `LIGHT_BEFORE_SOUND_MS`
@@ -98,19 +98,20 @@ Worth stating plainly: replacing the matcher makes the persona suite non-determi
 - [ ] Evaluate the Piper Afrikaans voice with a family member rather than an engineer, and check provenance and licensing
 - [ ] Decide how the three privacy floors are enforced if any audio path leaves TypeScript, before such code exists
 - [ ] **Measure a small model on intent classification**, against the four red persona scenarios plus all 45 that currently pass. Measure its ability to abstain first and its accuracy second. On-device, since a cloud call cannot be mode one
-- [ ] **Revisit Mastra for the eval harness**, which is the condition PROJECT.md section 9 deferred it on and which has now been met. Not for the matcher
+- [x] **Revisit Mastra for the eval harness**, which is the condition PROJECT.md section 9 deferred it on and which has now been met. Not for the matcher. **Done 2026-08-03 in [`worklog/2026-08-03-eval-harness/`](../2026-08-03-eval-harness/plan.md), and the answer was to build it here instead.** The condition was pointed at the wrong layer: under the boundary that the answer policy stays scripted, nothing in mode one ever produces prose for a judge to grade. The harness exists, the baseline is committed, and the matcher now sits behind a `Classifier` seam a model can implement
 - [ ] Write the result up as an answer to PROJECT.md section 5's open question, and amend section 14
 - [ ] Closing step, below
 
 ## Current state
 
-- **Done:** the critique, and the decision that this task now also owns what does the matching. No code, no dependency added, no spike run.
-- **Next:** the platform decision, which is not an engineering call. Everything after it is measurement. If you want one thing to start with that needs no decision, it is Mastra for the eval harness, because that is wanted whatever happens to Whisper and it is the thing that makes swapping the matcher measurable rather than a leap.
+- **Done:** the critique, the decision that this task now also owns what does the matching, the platform decision, and the eval harness. No speech code, no model dependency, no spike run.
+- **Next:** the corpus. Everything remaining on the speech half is measurement, and every measurement needs recordings from consenting adults that do not exist yet. That is the one thing blocking all four remaining Whisper steps, and it is procurement and ethics rather than engineering.
+- **What is no longer blocked.** The platform question is settled and the eval harness exists, so the matcher measurement step can run as soon as there is a candidate model. `personas/eval.ts` is the seam and the baseline to beat.
 - **Open decisions:**
-  - **Native versus PWA.** PROJECT.md section 9 defers native until the interaction is validated, and it is not validated. The spec assumes native throughout. Nothing on the speech half proceeds until this is settled.
   - Whether to evaluate Whisper at all before the interaction is validated, or park the question entirely. Parking it is defensible: the brief asks for a cost number, and a cost number does not require a working integration.
-  - How the privacy floors are enforced outside TypeScript. Needed before any native audio code exists, not after. `privacy.test.ts` is a source scan over TypeScript and three documents describe it as making the floors true at code level.
-  - **Whether replacing the matcher is worth the cost at all.** It buys the four red scenarios and a matcher that is not made of stopword lists. It costs a deterministic test suite, a second on-device model, and a new class of failure where the thing deciding what was asked can be confidently wrong. Not decided.
+  - How the privacy floors are enforced outside TypeScript. Less urgent now that native is parked, since no audio path leaves TypeScript until it is unparked, but it has to be answered before such code exists rather than after. `privacy.test.ts` is a source scan over TypeScript and three documents describe it as making the floors true at code level.
+  - **Whether replacing the matcher is worth the cost at all.** Still open, deliberately. Bernard's 2026-08-03 call was to build the eval harness first rather than to commit either way, so the swap is now a measurement against a committed baseline instead of a leap.
+  - The maximum false speech rate a replacement has to clear. Today's matcher sits at 4/23 and every one of those four is a known acceptance criterion. Setting a target number before there is a candidate would be inventing it.
 
 ## Closing step
 

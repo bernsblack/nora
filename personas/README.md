@@ -25,10 +25,20 @@ Each family file has a **What they are trying to do** table instead, because the
 ## Running it
 
 ```bash
-pnpm exec vitest run personas
+pnpm exec vitest run personas   # the assertions, and the eval gate
+pnpm run eval                   # the readable scorecard
+pnpm run eval 5                 # five runs of each scenario
 ```
 
-Forty utterances across three residents, plus hard floor checks that run every utterance from every persona at once: never name a death unprompted, never say more than two sentences, and never say anything at all to somebody speaking Polish.
+Forty six utterances across three residents, plus hard floor checks that run every utterance from every persona at once: never name a death unprompted, never say more than two sentences, and never say anything at all to somebody speaking Polish.
+
+## Two shapes, on the same scenarios
+
+`personas.test.ts` asserts scenario by scenario, which is the right shape while the matcher is deterministic and is where a failure names the person and the sentence.
+
+`eval.ts` runs the same scenarios as rates, and exists because that stops being the right shape the moment what decides the intent is a model. It puts every classifier behind one interface, measures abstention before accuracy, and counts hard floor violations rather than averaging them. `eval.test.ts` pins the baseline and lets it improve but never worsen. The reasoning is in [`claude/rules/testing.md`](../claude/rules/testing.md).
+
+Today both run against the same matcher and agree. The scorecard, measured on 2026-08-03: it speaks to 4 of the 23 utterances that should get silence, misses none of the 23 that should get an answer, picks the right intent every time it answers, and breaks no floor. All four false positives are the scenarios that are red on purpose.
 
 ## The files
 
@@ -37,7 +47,9 @@ Forty utterances across three residents, plus hard floor checks that run every u
 | `*.md` | The people, for reading |
 | `fixtures.ts` | Each resident as data the device would hold: their room, their schedule, their faces, their answer policy |
 | `scenarios.ts` | Every utterance, with what should happen |
-| `personas.test.ts` | The run |
+| `personas.test.ts` | The run, asserted scenario by scenario |
+| `eval.ts` | The same run as rates, behind a classifier seam, for when the matcher is not deterministic |
+| `eval.test.ts` | The gate and the committed baseline |
 | [FINDINGS.md](FINDINGS.md) | What the first run turned up, and what was done about it |
 
 The fixtures are deliberately not the development fixtures in `src/data/fixtures.ts`. A question answered correctly against the wrong day is not evidence of anything, so each persona is tested in the room they are actually in, on a Tuesday at two in the afternoon.
