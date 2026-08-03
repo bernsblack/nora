@@ -133,7 +133,20 @@
 
 .location {
   font-size: var(--room-fs-location);
-  color: var(--room-ink-soft);
+  /*
+   * Primary ink, not ink-soft, and this was a defect for a while. At
+   * MIN_INK_DIM the night palette's primary ink measures 7.12 against the
+   * surface, which is barely over AAA, so nothing dimmer than it can clear
+   * AAA at night: this line sat at 5.74 and the room screen did not meet
+   * section 4 as rendered.
+   *
+   * The fix is not a lighter secondary colour, because there is no room
+   * underneath primary ink for one. It is that this line was never secondary.
+   * "You are at X, room 12" is what answers someone who wakes at three in the
+   * morning not knowing where they are, so it is the last line that should
+   * lose contrast, not the first. Hierarchy here is carried by size.
+   */
+  color: var(--room-ink);
   margin: 0;
   text-wrap: balance;
 }
@@ -241,17 +254,22 @@
  * Whatever has gone wrong is ours, and the person in the room cannot act on it.
  * They see a quiet screen. A member of staff who looks closely sees a marker.
  */
+/*
+ * No colours here. They used to be two literal hex values copied from
+ * DAY_PALETTE, which room-theme.test.ts cannot see and which made a failure at
+ * three in the morning a full brightness rectangle in a dark bedroom, the exact
+ * thing NIGHT_LUX_THRESHOLD exists to prevent. The palette now arrives from
+ * TypeScript, like every other colour on this screen.
+ */
 .fallback {
   grid-template-columns: 1fr;
   grid-template-areas: "day";
-  background: #fbf3e7;
 }
 
 .fallbackMark {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #7a2e0c;
   opacity: 0.35;
   position: absolute;
   bottom: 12px;

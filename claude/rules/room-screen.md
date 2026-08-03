@@ -52,3 +52,13 @@ Nothing outside `src/domain/simplicity.ts` may branch on the raw `SimplicityLeve
 ## Offline is a property, not a hope
 
 The page serialises the whole day and hands it to the client once. Every tick derives locally. Introducing a fetch, a router refresh, or a server action into the render path breaks mode one in a care home with bad wifi, which is most care homes.
+
+That covers a page that stays loaded. A tablet that is on for months also **reloads**, when the kiosk browser restarts or the power blips, and until 2026-08-03 a reload with no network was a blank screen. `public/sw.js` caches the last good render, and `e2e/room.offline.spec.ts` asserts it, which is what moved the works-with-no-network row in `docs/traceability.md` off partial.
+
+Three things make serving a stale copy safe, and all three have to stay true:
+
+- **The day is not baked into the cached HTML.** `room-screen.tsx` starts on the server's clock so the first paint matches the server render, then follows the device clock from the first tick. A page cached three days ago is showing the right day fifteen seconds after it loads. Pinning the tick to `serverNow` would turn this cache into a device that is confidently wrong about what day it is, which is worse than a blank screen.
+- **Schedule entries are cached for a day either side.** Past that the horizon empties and the screen renders `quietDay`. Never a lack, and never a stale appointment.
+- **Only `/room` and `/_next/static/` are cached.** The family app must never be served a stale form: a daughter editing today's schedule from her phone has to reach the device.
+
+The worker is registered outside the render path by `register-service-worker.tsx` and fails silently, because nobody in the room could act on a registration error.

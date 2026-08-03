@@ -23,7 +23,21 @@ export interface RoomPalette {
   surface: string;
   /** Everything the person is meant to read from a bed at three metres. */
   ink: string;
-  /** Secondary lines only. Still held to the AA floor after dimming. */
+  /**
+   * The mic state indicator, and nothing else on the room screen.
+   *
+   * Held to AAA undimmed and only to the AA floor once dimmed, so it is the one
+   * line on this screen the AA floor is enough for. That is a judgement about
+   * what it is, not a claim that nobody reads it: it is a short fixed phrase at
+   * the edge of the screen, glanced at rather than read from a bed, and PROJECT
+   * .md section 4 sets AA as the absolute floor with AAA as the target.
+   *
+   * Nothing carrying the day, the room, the next thing or a name may use it. At
+   * MIN_INK_DIM the night palette's primary ink measures 7.12, barely over AAA,
+   * so there is no headroom beneath it for a second readable colour. The
+   * location line used to be here and sat at 5.74 at night, which is the defect
+   * four browser tests held open.
+   */
   inkSoft: string;
   /** Used for emphasis and for the mic indicator. Never the only signal. */
   accent: string;

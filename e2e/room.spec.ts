@@ -124,6 +124,9 @@ test.describe("readable from a bed at three metres", () => {
 
   for (const testId of ["day", "location", "next-thing", "photo-caption"]) {
     test(`${testId} clears the contrast target as rendered`, async ({ page }) => {
+      // Assert the palette these numbers are about, not just the numbers. See
+      // the note on the night loop below for why this is not belt and braces.
+      await expect(page.getByTestId("room")).toHaveAttribute("data-lighting", "day");
       const foreground = toHex(await computed(page, testId, "color"));
       const background = toHex(
         await page.getByTestId("room").evaluate((element) => getComputedStyle(element).backgroundColor),
@@ -133,21 +136,32 @@ test.describe("readable from a bed at three metres", () => {
   }
 
   /*
-   * Known failure, kept visible rather than pinned away. Dimmed to MIN_INK_DIM
-   * the location line measures about 5.7 against a target of 7, so the room
-   * screen does not clear AAA at night as rendered. MIN_INK_DIM carries the
-   * comment that it is "the exact point where the night palette's primary ink
-   * leaves AAA", and this line is evidently not primary ink, so the constant was
-   * set against one pairing and applied to all of them. room-theme.test.ts
-   * computes every pairing and passes, which is the same shape as the hashed
-   * class name incident: green units, wrong rendering.
+   * These were four fixme cases holding a real defect: dimmed to MIN_INK_DIM
+   * the location line measured about 5.7 against a target of 7, so the room
+   * screen did not clear AAA at night as rendered while room-theme.test.ts
+   * computed every pairing and passed. Green units, wrong rendering, which is
+   * the same shape as the hashed class name incident.
    *
-   * Changing MIN_INK_DIM or the ink this line uses is a product decision under
-   * claude/rules/room-screen.md. See worklog/2026-08-02-matcher-precision/errors.md.
+   * Only the location line ever failed. The other three inherit primary ink and
+   * measure 7.12. All four were fixme because they share this loop, which is
+   * worth knowing before reading a skipped test as four separate defects.
+   *
+   * Closed by making the location line primary ink rather than by moving
+   * MIN_INK_DIM, since raising the dim floor makes the screen brighter at three
+   * in the morning and that constant exists to stop exactly that. The reasoning
+   * is in room.module.css beside the rule.
+   *
+   * The data-lighting assertion is not decoration. `?lux=` is only honoured on
+   * fixtures (device-token.ts), so with a DATABASE_URL set the parameter is
+   * ignored, lighting falls back to the hour, and in the morning these four
+   * would measure the day palette at 12:1 and pass while asserting nothing
+   * about night. That is the clock dependence incident of 2026-08-02 returning
+   * through a different door, silently this time. Assert the palette.
    */
   for (const testId of ["day", "location", "next-thing", "photo-caption"]) {
-    test.fixme(`${testId} clears the contrast target at night`, async ({ page }) => {
+    test(`${testId} clears the contrast target at night`, async ({ page }) => {
       await page.goto(`/room?token=dev-room-token&lux=${NIGHT_LUX_THRESHOLD - 1}`);
+      await expect(page.getByTestId("room")).toHaveAttribute("data-lighting", "night");
       const foreground = toHex(await computed(page, testId, "color"));
       const background = toHex(
         await page.getByTestId("room").evaluate((element) => getComputedStyle(element).backgroundColor),
