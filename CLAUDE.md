@@ -46,6 +46,7 @@ Each rule carries the reason a constraint exists, and most of them exist because
 pnpm dev                      # http://localhost:3000
 pnpm run check                # typecheck, lint, unit tests
 pnpm run e2e                  # browser tests
+pnpm run test:db              # repository contract suite against a real Postgres
 pnpm run screenshots          # writes screenshots/
 pnpm exec vitest run personas # the persona stress test alone
 ```

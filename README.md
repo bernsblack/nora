@@ -32,10 +32,12 @@ Everything that touches an external service sits behind an interface with a work
 | Ambient light | Assumes darkness by the clock | `src/services/ambient-light.ts` |
 | Calendar fetch | A bundled `.ics` | `src/services/calendar.ts` |
 | Family authentication | One fixed signed in user | `src/services/family-auth.ts` |
-| Photo and audio storage | Data URLs in memory | `src/services/media-storage.ts` |
+| Photo and audio storage | Nothing calls it yet. Photos are added by pasting a URL | `src/services/media-storage.ts` |
 | Mode two conversation | Returns nothing at all | `src/services/conversation.ts` |
 
-The Drizzle schema and Postgres implementation are written and the first migration is generated, but neither has run against a real database. Switching is setting `DATABASE_URL`.
+The Drizzle schema, the Postgres implementation and the first migration now run against a real database: `pnpm run test:db` starts a throwaway Postgres, applies every migration in order, and runs `src/data/repository.contract.test.ts`, which requires the same answers from the in memory repository and the Postgres one. Switching the app over is still just setting `DATABASE_URL`.
+
+That suite skips its Postgres half without `TEST_DATABASE_URL`, so `pnpm run check` alone still says nothing about the database code. Run `pnpm run test:db` after touching anything in `src/data/`.
 
 ## Layout
 
@@ -116,6 +118,8 @@ Read [personas/README.md](personas/README.md) first.
 ```bash
 pnpm run check        # types, lint, unit tests
 pnpm run e2e          # browser tests
+pnpm run test:db      # repository contract suite against a throwaway Postgres
+pnpm run eval         # the persona scorecard, as rates rather than assertions
 pnpm run screenshots  # writes screenshots/ for a visual recap
 ```
 

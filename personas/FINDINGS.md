@@ -181,6 +181,27 @@ Both are architectural rather than a scoring bug, and a red test that no planned
 
 **`asked` is hardcoded true**, in `use-voice.ts` and in the persona runner alike. Floor 1 is "not asked, stay silent", so the floor that exists to stop a death being volunteered never fires in the running product, and nothing between the microphone and that flag distinguishes "she asked me" from "a sentence contained a name". Combined with finding 8 above, floor 1 is currently protected only by vocabulary overlap.
 
+## 13. A person nobody has written down is not a subject, so the hardest question answers with the room number
+
+Found by the panel run on 2026-08-03, on the change that added the family setup flow. Not a scoring bug and not a regression: it has always been true. What changed is that the setup flow makes it the **ordinary first state** of every person, so it went from a corner to the default.
+
+`knownSubjects` builds the subject list from the answer policy's topics, the photographs, and any visitor named on the schedule (`src/domain/voice/subjects.ts:67-69`). A family that has just finished setup has chosen a mode and written nobody down, so a husband with no topic and no photo is not a subject at all. A phrasing carrying the subject slot cannot match, and the utterance falls through to the next best intent.
+
+Reproduced against Marta's fixtures with her topics emptied and the mode set to truthful, which is exactly what setup produces:
+
+```text
+"waar is my man"      -> rule where-am-i, "Jy is by Willowbrook, kamer 12."
+"where is my husband" -> rule where-am-i, "You are at Willowbrook, room 12."
+```
+
+That is the sentence PROJECT.md section 6 uses as its example of the hardest question in the product, answered with the name of the care home. It is the same shape as finding 1, where "waar is my handsak" was answered with the facility name, and the same shape as finding 2, where the relationship was not recognised. Both of those were closed. This is the third door into the same room.
+
+Two things make it worse than it looks. The answer is confident and wrong rather than silent, so "silence beats a wrong answer" is not holding. And it is invisible to the family: the app now says plainly that until somebody is written down the device says the same gentle thing about anyone she asks after, which is what `unknown-subject-redirect` does for a **known** subject, and is not what happens for an unknown one.
+
+**Not fixed here, deliberately.** The fix is in subject recognition or in the matcher, which is the area carrying four scenarios that are red on purpose and a rule saying not to tune the scorer. It also needs a product decision: whether a relationship with no configured person should be answered gently, or should be silence. Silence is the obvious reading of section 3, and it is not this session's call to make.
+
+**No scenario yet**, for the same reason as the two below: reproducing it needs a persona whose policy has no topics, and every resident fixture ships a decided person. A fixture variant is the cheapest way in, and `InMemoryRepository` already takes `{ answerPolicy: false }` for the same reason on the family app side.
+
 ## What the panel run says about the suite itself
 
 The first run's lesson was that the matcher's own tests passed because they used the phrasings the matcher was built from. The second run's lesson is one level up: **the persona scenarios had started doing the same thing.** Three of the highest risk utterances in the folder sit one word away from a form that breaks, and all four Jan scenarios reduce, after slot filling, to a phrasing the intent set already ships.

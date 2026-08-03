@@ -22,7 +22,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | One answer per screen | `room.spec.ts` shows exactly one next thing; `room.voice.spec.ts` shows only one answer at a time; `room-view.test.ts` shows one next thing, singular | enforced |
 | Short spoken answers, one or two sentences | `MAX_SPOKEN_SENTENCES`, `MAX_SPOKEN_WORDS`; `answers.test.ts` stays within the spoken limits, per question; `policy.test.ts` keeps the generated truthful answer to two sentences; `personas.test.ts` never says more than two sentences | enforced |
 | Never quiz | `room-view.test.ts` puts a name under the face, which covers the one manifestation that was thought about. Nothing forbids a recall prompt in a string | partial |
-| Silence beats a wrong answer | `INTENT_SPEAK_THRESHOLD`, `INTENT_ADDRESSED_THRESHOLD`; `matcher.test.ts` ignores speech that is not addressed, treats a partial match as addressed rather than answering it, keeps the two thresholds ordered; `answers.test.ts` says nothing at all when nobody asked; `room.voice.spec.ts` stays quiet when it did not understand; the silence scenarios in `personas/scenarios.ts`. **Four of those scenarios currently fail**, deliberately: the device speaks to an overheard sentence, to a remark about the weather, and to a two word fragment about a dead husband | **failing** |
+| Silence beats a wrong answer | `INTENT_SPEAK_THRESHOLD`, `INTENT_ADDRESSED_THRESHOLD`; `matcher.test.ts` ignores speech that is not addressed, treats a partial match as addressed rather than answering it, keeps the two thresholds ordered; `answers.test.ts` says nothing at all when nobody asked; `room.voice.spec.ts` stays quiet when it did not understand; the silence scenarios in `personas/scenarios.ts`; `eval.test.ts` holds the false speech rate at its measured baseline and lets it fall but never rise. **Four of those scenarios currently fail**, deliberately: the device speaks to an overheard sentence, to a remark about the weather, and to a two word fragment about a dead husband | **failing** |
 | Light before sound | `LIGHT_BEFORE_SOUND_MS`, used in `use-voice.ts`. No test | **nothing** |
 
 ## Section 4, the room screen
@@ -37,7 +37,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | Readable from a bed at three metres | `ROOM_MIN_TEXT_PX`; `room.spec.ts` size and weight, across day, location, next-thing, photo-caption and mic-state; `room-theme.test.ts` never drops below the minimum text size. The three metre claim itself is a derivation in a comment, never measured with a person | partial |
 | Not blue dominant | `room-theme.test.ts` uses no blue dominant colour on the room screen | enforced |
 | No thin fonts, tracking at 0 or positive | `ROOM_MIN_FONT_WEIGHT`, `ROOM_MIN_LETTER_SPACING_EM`; `room-theme.test.ts` carries the weight and tracking floors; `room.spec.ts` size and weight as rendered | enforced |
-| WCAG AAA where achievable, AA as the floor | `room-theme.test.ts`, four pairings, undimmed and at the dim floor; `room.spec.ts` clears the contrast target as rendered | enforced |
+| WCAG AAA where achievable, AA as the floor | `room-theme.test.ts`, four pairings, undimmed and at the dim floor; `room.spec.ts` clears the contrast target as rendered, in daylight and at night. The night cases were four `test.fixme` holding a real defect until 2026-08-03, when the location line stopped being secondary ink | enforced |
 | Auto-dim to ambient light | `lighting.test.ts`, six tests including never goes below the dim floor whatever the sensor says | enforced |
 | No animation that reads as movement, slow crossfades only | `ROOM_CROSSFADE_MS`. Nothing asserts that nothing else animates | **nothing** |
 | No navigation, no way to reach a broken state | `room.spec.ts` has no navigation, no links, and nothing to press; shows a quiet screen rather than an error; does not scroll | enforced |
@@ -51,7 +51,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | The buffer is in memory for seconds and overwritten | `TRANSCRIPT_BUFFER_MS`, `TRANSCRIPT_BUFFER_MAX_ENTRIES`; `privacy.test.ts` holds text and only for the window, empties on silence without anybody reading it, is bounded, drops everything on clear | enforced |
 | A microphone switch the family controls | `family.spec.ts` turning the microphone off says so on the room screen | enforced |
 | Mic state visible from across the room | `room.spec.ts` says what the microphone is doing in words; `mic-state` is in the size and weight loop; does not claim to transmit when it is not | enforced |
-| Works with no network | implied by the fetch ban plus serialising the day once. No test starts the room screen offline | partial |
+| Works with no network | the fetch ban plus serialising the day once; `public/sw.js` caches the last good render; `room.offline.spec.ts` reloads the room screen with the network off and asserts the day, the location and the caption survive, and that the day still tracks the device clock | enforced |
 
 ## Section 6, what Nora says about the dead
 
@@ -59,7 +59,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | --- | --- | --- |
 | Default is gentle redirection, not correction | `policy.test.ts` falls back to gentle redirection when nothing is set | enforced |
 | The family can write the exact wording | `policy.test.ts` uses the family's wording when they wrote some; `family.spec.ts` shows the family's own wording back to them, saves wording that holds | enforced |
-| Set as an explicit choice at setup, not discovered later | `family.spec.ts` is set apart from the ordinary settings and says what it will not do. That tests the presentation, not that it is chosen during setup, because there is no setup flow yet | partial |
+| Set as an explicit choice at setup, not discovered later | `setup.test.ts` treats the absence of a policy record as not-yet-decided and a chosen gentle-redirection as decided; `family.setup.spec.ts` sends an undecided family member to setup, asserts no option arrives already selected, and refuses an empty submission in the browser and again on the server; `family.spec.ts` keeps it set apart from the ordinary settings | enforced |
 | Never volunteer a death | `policy.test.ts` says nothing unprompted, across all three modes; never names a death when the question is not about that subject; `personas.test.ts` never names a death unprompted, across every persona and utterance | enforced |
 | Never elaborate on one | `wording.test.ts` keeps at most the sentence limit, never cuts mid sentence; `policy.test.ts` trims over long family wording rather than saying all of it. Length is enforced. "Elaborate" is broader than length and the rest rests on the wording being family authored | partial |
 | Never imply a person is alive when the family chose truthfulness | `wording.test.ts` rejects wording that implies life under truthfulness, allows a living subject to be described as living; `policy.test.ts` drops family wording that implies the subject will be back, does not trip on a sentence about somebody else | enforced |
