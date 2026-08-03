@@ -1,5 +1,6 @@
 import { and, asc, eq, gte, isNull, lt } from "drizzle-orm";
-import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/neon-http";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { neon } from "@neondatabase/serverless";
 import type { RoomData } from "@/domain/room-view";
 import type {
@@ -20,17 +21,26 @@ import type { NoraRepository } from "../repository";
 import * as schema from "./schema";
 
 /**
- * Postgres implementation, for Neon. Unexercised until a DATABASE_URL exists:
- * the in memory repository is what the prototype and the tests run against, and
- * this is here so that switching is a config change rather than a rewrite.
+ * Postgres implementation, for Neon.
  *
- * When the first branch database is provisioned, the contract test in
- * data/repository.contract.test.ts should be pointed at this class as well.
+ * Exercised by `src/data/repository.contract.test.ts`, which runs one suite
+ * against this class and the in memory one and requires the same answers from
+ * both. That test needs a Postgres to talk to and skips itself without one, so
+ * read its header before trusting a green run.
+ *
+ * The database is typed as any Drizzle Postgres database rather than as Neon's
+ * specifically. Production builds it over Neon's HTTP driver via `fromUrl`; the
+ * contract test builds it over node-postgres against a local server, because
+ * Neon's HTTP driver only talks to Neon. The SQL Drizzle emits is identical, so
+ * what the test covers is every query, every row to domain conversion and every
+ * ordering in this file, which is where the substance is. What it does not
+ * cover is the transport, and that difference is why `fromUrl` stays thin
+ * enough to read in one line.
  */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type Database = NeonHttpDatabase<typeof schema>;
+export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 function localized(value: unknown): LocalizedText {
   return (value ?? {}) as LocalizedText;

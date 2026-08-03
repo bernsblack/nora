@@ -33,6 +33,20 @@ import type { NoraRepository } from "./repository";
  * edit may not survive to the next request, which is fine for a prototype and
  * is the reason to reach for Neon rather than a reason to add persistence here.
  */
+/**
+ * What the fixtures should contain.
+ *
+ * `answerPolicy: false` seeds a person nobody has set up yet, which is a real
+ * state the product has rather than a testing convenience: until a family
+ * chooses, there is no policy row, and `domain/setup` reads that absence as the
+ * signal to run setup. Without a way to build it, the only person in the
+ * fixtures is one who has already been decided for, and the setup flow could
+ * never be exercised end to end.
+ */
+export interface SeedOptions {
+  answerPolicy?: boolean;
+}
+
 export class InMemoryRepository implements NoraRepository {
   private people = new Map<string, Person>();
   private facilities = new Map<string, Facility>();
@@ -45,7 +59,7 @@ export class InMemoryRepository implements NoraRepository {
   private calendars = new Map<string, CalendarSubscription>();
   private sequence = 0;
 
-  constructor(seedAt: Date = new Date()) {
+  constructor(seedAt: Date = new Date(), options: SeedOptions = {}) {
     this.facilities.set(fixtureFacility().id, fixtureFacility());
     this.people.set(fixturePerson().id, fixturePerson());
     for (const entry of fixtureSchedule(seedAt)) this.entries.set(entry.id, entry);
@@ -54,8 +68,10 @@ export class InMemoryRepository implements NoraRepository {
     for (const message of fixtureVoiceMessages(seedAt)) {
       this.voiceMessages.set(message.id, message);
     }
-    const policy = fixtureAnswerPolicy();
-    this.policies.set(policy.personId, policy);
+    if (options.answerPolicy !== false) {
+      const policy = fixtureAnswerPolicy();
+      this.policies.set(policy.personId, policy);
+    }
     for (const token of fixtureDeviceTokens(seedAt)) this.tokens.set(token.token, token);
     for (const calendar of fixtureCalendarSubscriptions()) {
       this.calendars.set(calendar.id, calendar);
