@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LIGHT_BEFORE_SOUND_MS } from "@/config/constants";
 import { answerFor } from "@/domain/voice/answers";
 import { RollingTranscriptBuffer } from "@/domain/voice/buffer";
+import { wasAddressed } from "@/domain/voice/addressing";
 import { decide, matchIntent } from "@/domain/voice/matcher";
 import { knownSubjects } from "@/domain/voice/subjects";
 import type { RoomData } from "@/domain/room-view";
@@ -97,7 +98,12 @@ export function useVoice(options: UseVoiceOptions): UseVoiceResult {
       }
       if (!match) return;
 
-      const answer = answerFor(match, { data, policy, now: at, asked: true });
+      const answer = answerFor(match, {
+        data,
+        policy,
+        now: at,
+        asked: wasAddressed(match),
+      });
       if (!answer.speak) {
         setHeard({ kind: "addressed" });
         return;
