@@ -27,6 +27,13 @@ jobs:
 
       - run: pnpm run typecheck
       - run: pnpm run lint
+
+      # This step is currently red on every run, and deliberately so: four
+      # persona scenarios describe what the matcher cannot do and are the
+      # acceptance criteria for whatever replaces it (claude/rules/testing.md).
+      # A permanently red pipeline is a signal nobody reads, so this wants
+      # settling rather than living with. It is a decision about the persona
+      # suite, not a CI tweak, and it is recorded in handoff/NEXT.md.
       - run: pnpm run test # includes the persona suite
 
       - run: pnpm exec playwright install --with-deps chromium
@@ -38,3 +45,52 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # The Postgres half of the repository contract suite, which skips itself
+  # without TEST_DATABASE_URL. Without this job it had run exactly once, on one
+  # laptop, and nothing would have noticed when it stopped passing: `pnpm run
+  # check` says nothing at all about src/data/drizzle/.
+  #
+  # A service container rather than `pnpm run test:db`, which starts its own
+  # container and is the right shape on a developer machine, not inside one.
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nora
+          POSTGRES_PASSWORD: nora
+          POSTGRES_DB: nora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nora -d nora_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://nora:nora@127.0.0.1:5432/nora_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Every migration in order, so this exercises the real migration path
+      # rather than pushing the schema straight from the TypeScript. A migration
+      # that does not reproduce the schema fails here rather than in a care home.
+      - name: Apply migrations
+        run: |
+          for migration in drizzle/*.sql; do
+            echo "applying $(basename "$migration")"
+            psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$migration"
+          done
+
+      - run: pnpm exec vitest run src/data/repository.contract.test.ts
