@@ -51,3 +51,19 @@ field that quietly gets rounded up to "review".
 - **How it was caught:** checking for a manifest while surveying what a real room needs, rather than trusting the stack table. `docs/traceability.md` had already marked works-with-no-network as partial with the exact reason, "no test starts the room screen offline", so the gap was written down and had been read past more than once.
 - **Proposed guide or sensor:** a partial row in `docs/traceability.md` that names its own missing test is a backlog item, and this one sat while three sessions worked on other things. Read that document at the start of a milestone, not only when closing a task.
 - **Now enforced by:** `public/sw.js` and `e2e/room.offline.spec.ts`. Falsified before being trusted: with room caching disabled the three offline assertions fail and the manifest one still passes, so the tests depend on the thing they claim to test. The traceability row is enforced rather than partial.
+
+## A probe that skipped a stage produced a finding that was not true
+
+- **What went wrong:** finding 13 was written, committed, put in the handoff and named in a commit message, claiming that straight after setup "waar is my man" is answered with the facility name and room number. It is not. The device stays silent. The utterance scores 0.225 against `where-am-i`, far below the threshold at which anything is said.
+- **Root cause:** the probe called `matchIntent` and then `answerFor`, and skipped `decide` in between. `decide` is the gate that turns a weak match into silence, so removing it made every match look like an answer, and the output was a real sentence produced by a pipeline the product never runs. The reasoning on top of it was sound and the conclusion was still wrong.
+- **How it was caught:** by the scenarios written from the finding passing. Two scenarios were added expecting silence, both went green immediately, and green where red was expected is what forced a second look. That is the persona suite doing exactly what it is for, contradicting a claim made about the code.
+- **Proposed guide or sensor:** a probe of the voice path has to be the whole voice path, `matchIntent` then `decide` then `answerFor`, because two of the three floors live in the stages a shortcut skips. The persona runner already does this, so the cheapest correct probe is to add a scenario rather than to write a script.
+- **Now enforced by:** nothing mechanical, and it is hard to see what would be. Recorded in `personas/FINDINGS.md` finding 13, which is left in place as a withdrawal rather than deleted, so the next person who finds something alarming with a quick script has the story.
+
+## An abstraction was built for a defect that did not exist
+
+- **What went wrong:** `OPEN_DEFECTS` was added to `personas/eval.ts` alongside `KNOWN_RED`, to distinguish "what this approach cannot do" from "fixable and still red", with reporting and a scorecard field. The finding it was built for turned out not to be a defect, so it had no members, and it was removed in the same session.
+- **Root cause:** the machinery was written before the finding was verified. The distinction it encodes is a good one and may well be wanted later; building it against an unconfirmed defect is what made it speculative.
+- **How it was caught:** immediately, by the same passing scenarios.
+- **Proposed guide or sensor:** verify the failing case before building the thing that categorises failing cases. The order costs nothing and this session had just fixed `SETUP_STEPS`, which declared a step nothing implemented, for exactly the same reason.
+- **Now enforced by:** nothing. The pattern is recorded twice in this file now, which is the strongest argument available for noticing it a third time.

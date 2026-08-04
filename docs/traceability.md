@@ -18,12 +18,12 @@ There is one **failing** row, and it is the most important requirement in sectio
 | Requirement | Held up by | Status |
 | --- | --- | --- |
 | Never impatient | `policy.test.ts` never acknowledges that the question has been asked before; `room.voice.spec.ts` sounds the same on the fortieth ask as the first | enforced |
-| No scorekeeping | nothing | **nothing** |
+| No scorekeeping | `room.spec.ts` shows nothing shaped like a checklist, no list, checkbox, progress element or list role, and counts nothing out loud | enforced |
 | One answer per screen | `room.spec.ts` shows exactly one next thing; `room.voice.spec.ts` shows only one answer at a time; `room-view.test.ts` shows one next thing, singular | enforced |
 | Short spoken answers, one or two sentences | `MAX_SPOKEN_SENTENCES`, `MAX_SPOKEN_WORDS`; `answers.test.ts` stays within the spoken limits, per question; `policy.test.ts` keeps the generated truthful answer to two sentences; `personas.test.ts` never says more than two sentences | enforced |
 | Never quiz | `room-view.test.ts` puts a name under the face, which covers the one manifestation that was thought about. Nothing forbids a recall prompt in a string | partial |
 | Silence beats a wrong answer | `INTENT_SPEAK_THRESHOLD`, `INTENT_ADDRESSED_THRESHOLD`; `matcher.test.ts` ignores speech that is not addressed, treats a partial match as addressed rather than answering it, keeps the two thresholds ordered; `answers.test.ts` says nothing at all when nobody asked; `room.voice.spec.ts` stays quiet when it did not understand; the silence scenarios in `personas/scenarios.ts`; `eval.test.ts` holds the false speech rate at its measured baseline and lets it fall but never rise. **Four of those scenarios currently fail**, deliberately: the device speaks to an overheard sentence, to a remark about the weather, and to a two word fragment about a dead husband | **failing** |
-| Light before sound | `LIGHT_BEFORE_SOUND_MS`, used in `use-voice.ts`. No test | **nothing** |
+| Light before sound | `LIGHT_BEFORE_SOUND_MS`; `room.voice.spec.ts` records when the answer first appears and when speech is first requested, and requires the gap. Measured in a browser, not asserted structurally | enforced |
 
 ## Section 4, the room screen
 
@@ -39,7 +39,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | No thin fonts, tracking at 0 or positive | `ROOM_MIN_FONT_WEIGHT`, `ROOM_MIN_LETTER_SPACING_EM`; `room-theme.test.ts` carries the weight and tracking floors; `room.spec.ts` size and weight as rendered | enforced |
 | WCAG AAA where achievable, AA as the floor | `room-theme.test.ts`, four pairings, undimmed and at the dim floor; `room.spec.ts` clears the contrast target as rendered, in daylight and at night. The night cases were four `test.fixme` holding a real defect until 2026-08-03, when the location line stopped being secondary ink | enforced |
 | Auto-dim to ambient light | `lighting.test.ts`, six tests including never goes below the dim floor whatever the sensor says | enforced |
-| No animation that reads as movement, slow crossfades only | `ROOM_CROSSFADE_MS`. Nothing asserts that nothing else animates | **nothing** |
+| No animation that reads as movement, slow crossfades only | `ROOM_CROSSFADE_MS`; `room-motion.test.ts` scans the room stylesheet and fails any animation or transition not timed from the crossfade variable, any literal duration, and a missing reduced motion block | enforced |
 | No navigation, no way to reach a broken state | `room.spec.ts` has no navigation, no links, and nothing to press; shows a quiet screen rather than an error; does not scroll | enforced |
 
 ## Section 5, the voice layer and privacy
@@ -51,7 +51,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | The buffer is in memory for seconds and overwritten | `TRANSCRIPT_BUFFER_MS`, `TRANSCRIPT_BUFFER_MAX_ENTRIES`; `privacy.test.ts` holds text and only for the window, empties on silence without anybody reading it, is bounded, drops everything on clear | enforced |
 | A microphone switch the family controls | `family.spec.ts` turning the microphone off says so on the room screen | enforced |
 | Mic state visible from across the room | `room.spec.ts` says what the microphone is doing in words; `mic-state` is in the size and weight loop; does not claim to transmit when it is not; says whether sound is leaving the room in words rather than by the colour of a dot, which at night was no signal at all because accent and inkSoft are the same value | enforced |
-| Works with no network | the fetch ban plus serialising the day once; `public/sw.js` caches the last good render; `room.offline.spec.ts` reloads the room screen with the network off and asserts the day, the location and the caption survive, and that the day still tracks the device clock | enforced |
+| Works with no network | the fetch ban plus serialising the day once; `public/sw.js` caches the last good render; `room.offline.spec.ts` reloads the room screen with the network off and asserts the day, the location, the caption and the photograph itself survive, that the day still tracks the device clock, that one room's cached render is never served to another room's token, and that a wizard render is never resurrected onto an ordinary reload | enforced |
 
 ## Section 6, what Nora says about the dead
 
@@ -60,7 +60,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | Default is gentle redirection, not correction | `policy.test.ts` falls back to gentle redirection when nothing is set | enforced |
 | The family can write the exact wording | `policy.test.ts` uses the family's wording when they wrote some; `family.spec.ts` shows the family's own wording back to them, saves wording that holds | enforced |
 | Set as an explicit choice at setup, not discovered later | `setup.test.ts` treats the absence of a policy record as not-yet-decided and a chosen gentle-redirection as decided; `family.setup.spec.ts` sends an undecided family member to setup, asserts no option arrives already selected, and refuses an empty submission in the browser and again on the server; `family.spec.ts` keeps it set apart from the ordinary settings | enforced |
-| Never volunteer a death | `policy.test.ts` says nothing unprompted, across all three modes; never names a death when the question is not about that subject; `personas.test.ts` never names a death unprompted, across every persona and utterance | enforced |
+| Never volunteer a death | `policy.test.ts` says nothing unprompted, across all three modes; never names a death when the question is not about that subject; `personas.test.ts` never names a death unprompted, across every persona and utterance. **The floor is fully tested and never fires in the running product**, because `wasAddressed` has no way to return false; `addressing.test.ts` keeps that compromise in one named place and forbids a bare `asked` literal anywhere else | partial |
 | Never elaborate on one | `wording.test.ts` keeps at most the sentence limit, never cuts mid sentence; `policy.test.ts` trims over long family wording rather than saying all of it. Length is enforced. "Elaborate" is broader than length and the rest rests on the wording being family authored | partial |
 | Never imply a person is alive when the family chose truthfulness | `wording.test.ts` rejects wording that implies life under truthfulness, allows a living subject to be described as living; `policy.test.ts` drops family wording that implies the subject will be back, does not trip on a sentence about somebody else | enforced |
 
@@ -69,7 +69,7 @@ There is one **failing** row, and it is the most important requirement in sectio
 | Requirement | Held up by | Status |
 | --- | --- | --- |
 | The dial is a first class concept, not feature flags | `room-view.test.ts` shows everything when turned up, stops speaking first at calm, leaves the day and a face at minimal; `family.spec.ts` the simplicity dial takes things off the room screen | enforced |
-| Nothing branches on the raw level outside `simplicity.ts` | a rule in `claude/rules/room-screen.md`. Nothing checks it | **nothing** |
+| Nothing branches on the raw level outside `simplicity.ts` | `simplicity.test.ts` scans every source file for a comparison against a raw level, or a switch on one, outside its home | enforced |
 | A family note outranks the schedule, and expires | `NOTE_OUTRANKS_SCHEDULE_MINUTES`; `room-view.test.ts` shows the note instead of the next event, ignores a note that has gone stale, ignores a note that has expired | enforced |
 | Calendar import, read only, merged | `calendar.test.ts`, eleven tests; replaces calendar entries and leaves family entries alone | enforced |
 
@@ -90,13 +90,15 @@ The one worth a sensor eventually is monitoring. Not reporting what a resident a
 
 ## What nothing holds
 
-Six rows, gathered so they are hard to miss.
+Two rows, down from six on 2026-08-04.
 
-1. **No scorekeeping.** Nothing would fail if a count, a checklist, or an unticked box appeared on the room screen.
-2. **Light before sound.** The constant exists and is used. Nothing asserts the screen wakes before the voice starts, which is the one ordering that makes a voice in a dark room bearable.
-3. **No animation beyond the crossfade.** A future component could animate freely.
-4. **Nothing branches on the raw simplicity level.** A rule, unguarded. The first violation will look reasonable.
-5. **Never quiz** is held only where a face without a name was thought of. A recall prompt written into a string would ship.
-6. **Language reversion.** Known, and deliberately deferred.
+1. **Never quiz** is held only where a face without a name was thought of. A recall prompt written into a string would ship.
+2. **Language reversion.** Known, and deliberately deferred.
 
-The first four are cheap tests and worth writing. Five is a lint or a copy review rather than a test. Six is a product decision, not a gap.
+The first is a lint or a copy review rather than a test. The second is a product decision, not a gap.
+
+The four that closed were the ones this document called "cheap tests and worth writing", and they were: no scorekeeping and light before sound as browser tests, no animation beyond the crossfade and no branching on the raw simplicity level as source scans. Each was checked by breaking the thing it guards and watching it go red, because a scan that matches nothing looks identical to a scan that is broken.
+
+## Held, with the reason it is not the whole story
+
+One row moved the other way. **Never volunteer a death** is tested across every mode and cannot fire in the running product, because nothing can tell the device it was not addressed. That is recorded in `src/domain/voice/addressing.ts` rather than spread across call sites, and `addressing.test.ts` forbids a bare `asked` literal anywhere else, so the next person to touch it has to read why. The floor is real; what is missing is a signal that does not exist yet.

@@ -181,26 +181,28 @@ Both are architectural rather than a scoring bug, and a red test that no planned
 
 **`asked` is hardcoded true**, in `use-voice.ts` and in the persona runner alike. Floor 1 is "not asked, stay silent", so the floor that exists to stop a death being volunteered never fires in the running product, and nothing between the microphone and that flag distinguishes "she asked me" from "a sentence contained a name". Combined with finding 8 above, floor 1 is currently protected only by vocabulary overlap.
 
-## 13. A person nobody has written down is not a subject, so the hardest question answers with the room number
+## 13. Withdrawn. The device stays silent before setup, and the first version of this finding was wrong
 
-Found by the panel run on 2026-08-03, on the change that added the family setup flow. Not a scoring bug and not a regression: it has always been true. What changed is that the setup flow makes it the **ordinary first state** of every person, so it went from a corner to the default.
+Written and then corrected on 2026-08-04, in the same session. Left here rather than deleted, because the way it was got wrong is worth more than the finding would have been.
 
-`knownSubjects` builds the subject list from the answer policy's topics, the photographs, and any visitor named on the schedule (`src/domain/voice/subjects.ts:67-69`). A family that has just finished setup has chosen a mode and written nobody down, so a husband with no topic and no photo is not a subject at all. A phrasing carrying the subject slot cannot match, and the utterance falls through to the next best intent.
+**The claim was** that a person nobody has written down is not a known subject, so straight after setup "waar is my man" falls through to `where-am-i` and is answered with the facility name and room number, making the sentence PROJECT.md section 6 uses as its example the third door into the room findings 1 and 2 closed.
 
-Reproduced against Marta's fixtures with her topics emptied and the mode set to truthful, which is exactly what setup produces:
+**What actually happens**, measured against `personaContextBeforeSetup`:
 
 ```text
-"waar is my man"      -> rule where-am-i, "Jy is by Willowbrook, kamer 12."
-"where is my husband" -> rule where-am-i, "You are at Willowbrook, room 12."
+"waar is my man"      -> where-am-i, score 0.225 -> ignore, silence
+"where is my husband" -> where-am-i, score 0.225 -> ignore, silence
 ```
 
-That is the sentence PROJECT.md section 6 uses as its example of the hardest question in the product, answered with the name of the care home. It is the same shape as finding 1, where "waar is my handsak" was answered with the facility name, and the same shape as finding 2, where the relationship was not recognised. Both of those were closed. This is the third door into the same room.
+0.225 is far below `INTENT_ADDRESSED_THRESHOLD`, so the device says nothing at all. That is the correct behaviour and the system working as designed: no subject means no `where-is-person` match, nothing else matches well enough, and silence beats a wrong answer.
 
-Two things make it worse than it looks. The answer is confident and wrong rather than silent, so "silence beats a wrong answer" is not holding. And it is invisible to the family: the app now says plainly that until somebody is written down the device says the same gentle thing about anyone she asks after, which is what `unknown-subject-redirect` does for a **known** subject, and is not what happens for an unknown one.
+**How the mistake was made.** The probe that produced the finding called `answerFor` on the match without going through `decide` first. `decide` is the gate that turns a weak match into silence, so removing it made every match look like an answer. The output was real, the arithmetic was real, and the conclusion was wrong because a stage of the pipeline had been skipped.
 
-**Not fixed here, deliberately.** The fix is in subject recognition or in the matcher, which is the area carrying four scenarios that are red on purpose and a rule saying not to tune the scorer. It also needs a product decision: whether a relationship with no configured person should be answered gently, or should be silence. Silence is the obvious reading of section 3, and it is not this session's call to make.
+The lesson is narrow and worth keeping: **a probe of this path has to be the whole path.** `matchIntent` then `decide` then `answerFor`, in that order, because two of the three floors live in the parts a shortcut skips. The persona runner does exactly this, which is why the scenarios written from the finding passed immediately and contradicted it.
 
-**No scenario yet**, for the same reason as the two below: reproducing it needs a persona whose policy has no topics, and every resident fixture ships a decided person. A fixture variant is the cheapest way in, and `InMemoryRepository` already takes `{ answerPolicy: false }` for the same reason on the family app side.
+**What is left of it, and it is real.** The mode a family chooses at setup does nothing until they write somebody down, because `answerSensitive` returns `unknown-subject-redirect` before the mode is read, and before setup the question does not reach the answer policy at all. The device is safe, and the family's decision is inert. That is a product gap rather than a defect, it is now said plainly on both the setup screen and the settings page, and closing it means collecting a first topic during setup.
+
+`marta-husband-before-setup` and `marta-husband-before-setup-english` were added while this was believed to be a defect. They stay, green, because they are worth having: they pin that the device is silent in the ordinary first state of every person, and each sits one word from a scenario that answers.
 
 ## What the panel run says about the suite itself
 

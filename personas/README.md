@@ -30,7 +30,7 @@ pnpm run eval                   # the readable scorecard
 pnpm run eval 5                 # five runs of each scenario
 ```
 
-Forty six utterances across three residents, plus hard floor checks that run every utterance from every persona at once: never name a death unprompted, never say more than two sentences, and never say anything at all to somebody speaking Polish.
+Forty eight utterances across three residents, plus hard floor checks that run every utterance from every persona at once: never name a death unprompted, never say more than two sentences, and never say anything at all to somebody speaking Polish.
 
 ## Two shapes, on the same scenarios
 
@@ -38,7 +38,7 @@ Forty six utterances across three residents, plus hard floor checks that run eve
 
 `eval.ts` runs the same scenarios as rates, and exists because that stops being the right shape the moment what decides the intent is a model. It puts every classifier behind one interface, measures abstention before accuracy, and counts hard floor violations rather than averaging them. `eval.test.ts` pins the baseline and lets it improve but never worsen. The reasoning is in [`claude/rules/testing.md`](../claude/rules/testing.md).
 
-Today both run against the same matcher and agree. The scorecard, measured on 2026-08-03: it speaks to 4 of the 23 utterances that should get silence, misses none of the 23 that should get an answer, picks the right intent every time it answers, and breaks no floor. All four false positives are the scenarios that are red on purpose.
+Today both run against the same matcher and agree. The scorecard, measured on 2026-08-04: it speaks to 4 of the 25 utterances that should get silence, misses none of the 23 that should get an answer, picks the right intent every time it answers, and breaks no floor. All four false positives are the scenarios that are red on purpose.
 
 ## The files
 

@@ -3,9 +3,10 @@ import { mentionsDeath } from "@/domain/answer-policy/wording";
 import type { Language } from "@/domain/types";
 import { answerFor } from "@/domain/voice/answers";
 import type { IntentId } from "@/domain/voice/intents";
+import { wasAddressed } from "@/domain/voice/addressing";
 import { decide, matchIntent, type IntentMatch } from "@/domain/voice/matcher";
 import { knownSubjects, type KnownSubject } from "@/domain/voice/subjects";
-import { PERSONA_NOW, personaContext } from "./fixtures";
+import { PERSONA_NOW, personaContext, personaContextBeforeSetup } from "./fixtures";
 import { SCENARIOS, type Scenario } from "./scenarios";
 
 /**
@@ -237,7 +238,9 @@ export async function evaluate(
   const floorViolations: FloorViolation[] = [];
 
   for (const scenario of scenarios) {
-    const { data, policy } = personaContext(scenario.persona);
+    const { data, policy } = scenario.beforeSetup
+      ? personaContextBeforeSetup(scenario.persona)
+      : personaContext(scenario.persona);
     const languages = data.person.languages;
     const subjects = knownSubjects(data, policy);
 
@@ -264,7 +267,12 @@ export async function evaluate(
           language: classification.language,
           subjectName: classification.subjectName,
         };
-        const answer = answerFor(match, { data, policy, now: PERSONA_NOW, asked: true });
+        const answer = answerFor(match, {
+          data,
+          policy,
+          now: PERSONA_NOW,
+          asked: wasAddressed(match),
+        });
         spoke = answer.speak;
         rule = answer.rule;
       }

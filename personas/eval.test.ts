@@ -13,22 +13,26 @@ import { evaluate, KNOWN_RED, matcherClassifier } from "./eval";
  */
 
 /**
- * Measured against the current matcher on 2026-08-03, not chosen.
+ * Measured against the current matcher, not chosen.
  *
- * 23 of the 46 scenarios expect silence and 23 expect an answer. The four false
+ * 25 of the 48 scenarios expect silence and 23 expect an answer. The four false
  * speech runs are exactly the four scenarios that are red on purpose, so the
- * false speech rate is 4/23 and every one of them is a known acceptance
+ * false speech rate is 4/25 and every one of them is a known acceptance
  * criterion rather than a surprise.
  *
- * Update these only alongside a stated reason. A number that moves without one
- * is the thing this file exists to catch.
+ * Moved on 2026-08-04 from 4/23 over 46 scenarios, because two scenarios were
+ * added covering the state a person is in the moment setup finishes. Both
+ * expect silence and both pass, so the rate falls without the device changing.
+ * A larger denominator is the one baseline move that needs no argument. Any
+ * other change to these numbers needs a stated reason, which is what this file
+ * exists to force.
  */
 export const BASELINE = {
-  scenarios: 46,
-  falseSpeechRate: 4 / 23,
+  scenarios: 48,
+  falseSpeechRate: 4 / 25,
   missRate: 0,
   intentAccuracy: 1,
-  overallCorrect: 42 / 46,
+  overallCorrect: 44 / 48,
 } as const;
 
 describe("eval harness, against the current matcher", () => {

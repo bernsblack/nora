@@ -288,3 +288,26 @@ const BUILDERS: Record<ResidentId, (now: Date) => PersonaContext> = {
 export function personaContext(id: ResidentId, now: Date = PERSONA_NOW): PersonaContext {
   return BUILDERS[id](now);
 }
+
+/**
+ * The same person, in the state they are in the moment setup finishes.
+ *
+ * A family has chosen a mode and written nobody down yet, so the policy record
+ * exists and carries no topics. This is not a contrived state: it is the
+ * ordinary first state of every person the new setup flow creates, and it is
+ * the one `personas/FINDINGS.md` finding 13 is about.
+ *
+ * The mode is kept as the persona's own, because the finding is that the mode
+ * makes no difference here, and a scenario that changed it too would be
+ * testing two things.
+ */
+export function personaContextBeforeSetup(
+  id: ResidentId,
+  now: Date = PERSONA_NOW,
+): PersonaContext {
+  const context = BUILDERS[id](now);
+  return {
+    data: context.data,
+    policy: context.policy ? { ...context.policy, topics: [] } : null,
+  };
+}

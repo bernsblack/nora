@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { mentionsDeath } from "@/domain/answer-policy/wording";
 import { answerFor } from "@/domain/voice/answers";
+import { wasAddressed } from "@/domain/voice/addressing";
 import { decide, matchIntent } from "@/domain/voice/matcher";
 import { knownSubjects } from "@/domain/voice/subjects";
-import { PERSONA_IDS, PERSONA_NOW, personaContext } from "./fixtures";
+import {
+  PERSONA_IDS,
+  PERSONA_NOW,
+  personaContext,
+  personaContextBeforeSetup,
+} from "./fixtures";
 import { SCENARIOS, scenariosFor, type Scenario } from "./scenarios";
 
 /**
@@ -28,7 +34,9 @@ interface Result {
 }
 
 function run(scenario: Scenario): Result {
-  const { data, policy } = personaContext(scenario.persona);
+  const { data, policy } = scenario.beforeSetup
+    ? personaContextBeforeSetup(scenario.persona)
+    : personaContext(scenario.persona);
 
   const match = matchIntent(scenario.said, {
     subjects: knownSubjects(data, policy),
@@ -45,7 +53,7 @@ function run(scenario: Scenario): Result {
     };
   }
 
-  const answer = answerFor(match, { data, policy, now: PERSONA_NOW, asked: true });
+  const answer = answerFor(match, { data, policy, now: PERSONA_NOW, asked: wasAddressed(match) });
   return {
     spoke: answer.speak !== null,
     said: answer.speak,

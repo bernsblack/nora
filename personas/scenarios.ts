@@ -36,6 +36,12 @@ export interface Scenario {
   intent?: IntentId;
   /** Substrings that must never appear in what is spoken. Case insensitive. */
   mustNotSay?: string[];
+  /**
+   * Run this one against the person as they are the moment setup finishes: a
+   * mode chosen, nobody written down yet. The ordinary first state of every
+   * person, and the one finding 13 is about.
+   */
+  beforeSetup?: boolean;
   /** Why this one is here. Carried into the markdown. */
   note?: string;
 }
@@ -246,6 +252,36 @@ export const SCENARIOS: Scenario[] = [
     said: "dit is my huis",
     expect: "silence",
     note: "Not a question. She is insisting, and it scores 1.00 against is dit my huis, so she is contradicted by facility name and room number having asked nothing.",
+  },
+
+  /*
+   * Added 2026-08-04, after the panel run. These two are the state every person
+   * is in the moment a family finishes setup: a mode chosen, nobody written
+   * down yet.
+   *
+   * They were written believing the device answered the hardest question in the
+   * product with the name of the care home. It does not, and finding 13 records
+   * how that was got wrong. They are kept because they are worth having anyway:
+   * they pin that the device says nothing in the ordinary first state of every
+   * person, and each sits one word from a scenario that answers, which is what
+   * claude/rules/testing.md asks of a scenario on a sensitive utterance.
+   */
+
+  {
+    id: "marta-husband-before-setup",
+    persona: "marta",
+    said: "waar is my man",
+    expect: "silence",
+    beforeSetup: true,
+    note: "A husband nobody has written down is not a known subject, so the phrasing carrying the subject slot cannot match and this falls through to where-am-i at 0.225, far below the threshold at which anything is said. The device stays silent, which is right: it cannot answer this, and silence beats a wrong answer. Its neighbour marta-jan-by-relationship is the same sentence with a topic configured, and answers.",
+  },
+  {
+    id: "marta-husband-before-setup-english",
+    persona: "marta",
+    said: "where is my husband",
+    expect: "silence",
+    beforeSetup: true,
+    note: "The sentence PROJECT.md section 6 uses as its example of the hardest question in the product, in the state the setup flow leaves every person in. Its nearest neighbour marta-husband-english answers with the family's own words, because there a topic exists. The device being silent here rather than confidently wrong is the property worth holding.",
   },
 
   /* Trevor. Early stage, full insight, and openly sceptical of the device. */
