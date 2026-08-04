@@ -202,6 +202,46 @@ test.describe("the microphone is never a secret", () => {
   });
 });
 
+test.describe("no scorekeeping", () => {
+  /*
+   * PROJECT.md section 3, and it had nothing behind it: `docs/traceability.md`
+   * listed it under what nothing holds. A screen showing four incomplete tasks
+   * tells somebody every hour that they are failing, and the person reading it
+   * cannot act on any of them or remember agreeing to them.
+   *
+   * The shape to catch is a list. One next thing is already asserted elsewhere;
+   * this is the guard against the day somebody adds a second, and a third.
+   */
+  const LIST_SHAPES = [
+    "ul",
+    "ol",
+    "li",
+    "input[type=checkbox]",
+    "progress",
+    "[role=list]",
+    "[role=listitem]",
+    "[role=progressbar]",
+  ];
+
+  test("shows nothing shaped like a checklist", async ({ page }) => {
+    await page.goto(ROOM_URL);
+    const room = page.getByTestId("room");
+    for (const shape of LIST_SHAPES) {
+      await expect(room.locator(shape), `found ${shape} on the room screen`).toHaveCount(0);
+    }
+  });
+
+  test("counts nothing out loud", async ({ page }) => {
+    await page.goto(ROOM_URL);
+    const words = await page.getByTestId("room").innerText();
+
+    // "2 of 5", "1/4", "3 left", "2 done". A room number and a lunch time are
+    // bare numbers and stay legitimate.
+    expect(words).not.toMatch(/\b\d+\s*(?:of|\/)\s*\d+\b/i);
+    expect(words).not.toMatch(/\b\d+\s+(?:left|remaining|done|completed|to go)\b/i);
+  });
+});
+
 test.describe("an unknown device", () => {
   test("shows a quiet screen rather than an error", async ({ page }) => {
     await page.goto("/room?token=not-a-real-token");
